@@ -5,6 +5,9 @@
   "workspaces": [
     "packages/*"
   ],
+  "engines": {
+    "node": ">=22.17"
+  },
   "scripts": {
     "dev": "npm run dev -w @devmentor/app",
     "build": "npm run build -w @devmentor/app",

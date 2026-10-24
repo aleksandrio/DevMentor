@@ -36,7 +36,7 @@ Nauka programowania na własną rękę często kończy się utknięciem na probl
 
 ## Architektura
 
-> Migracja do tej architektury trwa według [`.ai/specs/2026-10-25-monorepo-migration.md`](.ai/specs/2026-10-25-monorepo-migration.md). Działają: workspace i pakiety, shadcn/ui, MikroORM z PostgreSQL oraz kontener Awilix z pierwszym przepływem żądania (status bazy na `/admin`).
+> Architekturę wprowadzono według specyfikacji [`.ai/specs/2026-10-25-monorepo-migration.md`](.ai/specs/2026-10-25-monorepo-migration.md). Szczegółowe zasady dla osób i agentów rozwijających projekt są w [`AGENTS.md`](AGENTS.md).
 
 DevMentor to monorepo oparte na npm workspaces. Kod jest podzielony na pakiety w katalogu `packages/`:
 
@@ -88,6 +88,8 @@ Szczegółowe zasady dla agentów AI i osób rozwijających projekt opisuje [`AG
 
 ## Uruchomienie lokalne
 
+Wymagany jest Node.js w wersji 22.17 lub nowszej (wymóg MikroORM 7) oraz npm.
+
 Zainstaluj zależności:
 
 ```bash
@@ -100,7 +102,7 @@ Uruchom serwer deweloperski:
 npm run dev
 ```
 
-Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost:3000).
+Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost:3000), a panel administracyjny pod [http://localhost:3000/admin](http://localhost:3000/admin). Panel pokazuje stan połączenia z bazą: „działa”, „niedostępna” albo „nieskonfigurowana”, gdy nie ustawiono `DATABASE_URL`.
 
 ### Baza danych (PostgreSQL)
 

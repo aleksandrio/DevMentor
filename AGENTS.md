@@ -18,7 +18,7 @@ O projekcie przeczytasz w `README.md`. Stos opisuje sekcja „Architektura i sto
 
 To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie. Odejście od nich (inna biblioteka, nowy pakiet, zmiana kierunku zależności) to decyzja architektoniczna: wymaga specyfikacji w `.ai/specs/` i zgody człowieka.
 
-> Stan na 2026-10-25: migracja trwa według `.ai/specs/2026-10-25-monorepo-migration.md`. Workspace i pakiety `app`, `core`, `db`, `ui` już istnieją (faza 1), granice pakietów egzekwuje ESLint, shadcn/ui i podział na `(frontend)` i `(backend)/admin` działają (faza 2), MikroORM z PostgreSQL jest skonfigurowany w `packages/db` (faza 3), a kontener Awilix i pierwszy przepływ żądania (status bazy na `/admin`) działają (faza 4). Została faza 5: domknięcie dokumentacji. Sprawdź w specyfikacji, która faza jest bieżąca, zanim dodasz kod z tych obszarów.
+> Architektura opisana niżej jest wdrożona (`.ai/specs/2026-10-25-monorepo-migration.md`). Wzorcem dla nowych funkcji jest przepływ statusu bazy na `/admin`: `core/src/health/` → `db/src/health/` → `app/src/server/container.ts` → `app/src/app/(backend)/admin/_components/database-status.tsx`.
 
 ### Stos
 
@@ -32,7 +32,7 @@ To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie
 | Dependency Injection | Awilix | Jeden kontener złożony w pakiecie `app`. |
 | Style stron frontendowych | Tailwind CSS | Publiczna część serwisu (strony dla uczących się i mentorów). |
 | Komponenty stron backendowych | shadcn/ui (na Tailwindzie) | Panel administracyjny i inne strony zaplecza. |
-| Monorepo | npm workspaces | Pakiety w katalogu `packages/`. |
+| Monorepo | npm workspaces | Pakiety w katalogu `packages/`. Node.js ≥ 22.17 (wymóg MikroORM 7, pole `engines`). |
 | Jakość | ESLint, `tsc` | `npm run lint`, `npm run typecheck` i `npm run build` przed każdym commitem. |
 
 Nie dodawaj alternatyw dla powyższych narzędzi (innego ORM-a, query buildera, kontenera DI, biblioteki komponentów czy CSS-in-JS) bez specyfikacji.
