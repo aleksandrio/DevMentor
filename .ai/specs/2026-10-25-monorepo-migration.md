@@ -60,12 +60,12 @@ Wspólne dla każdej fazy:
 - Grupy tras `src/app/(frontend)` i `src/app/(backend)/admin` z osobnymi layoutami; prosta strona `/admin` z komponentów shadcn/ui.
 - **Kryteria ukończenia:** kryteria wspólne + `/admin` renderuje komponent shadcn/ui ze stylami, strona główna bez zmian.
 
-### Faza 3: pakiet `db` — PostgreSQL i MikroORM
+### Faza 3: pakiet `db` — PostgreSQL i MikroORM — **ukończona 2026-10-25** (run: `.ai/runs/2026-10-25-monorepo-phase-3.md`)
 
 - MikroORM z driverem PostgreSQL w `packages/db`: konfiguracja z `DATABASE_URL` i pulą połączeń, singleton ORM w `globalThis` w trybie dev, migrator, skrypty `db:migrate`, `db:migration:create`.
 - `docker-compose.yml` z lokalnym PostgreSQL i `.env.example`.
 - Pakiety MikroORM w `serverExternalPackages` aplikacji, jeśli bundler tego wymaga.
-- **Kryteria ukończenia:** kryteria wspólne (build bez działającej bazy) + na lokalnym PostgreSQL `db:migrate` wykonuje migrację inicjalną.
+- **Kryteria ukończenia:** kryteria wspólne (build bez działającej bazy) + na lokalnym PostgreSQL `db:migrate` działa, a migracja wygenerowana z encji tworzy tabelę (zmienione 2026-10-25, zob. „Decyzje i zmiany”).
 
 ### Faza 4: Awilix — composition root i pierwszy przepływ żądania
 
@@ -78,7 +78,7 @@ Wspólne dla każdej fazy:
 - Usunięcie z `AGENTS.md` i `README.md` adnotacji o „docelowej” strukturze, aktualizacja sekcji „Uruchomienie lokalne”.
 - Przeniesienie tej specyfikacji do `implemented/`.
 
-**Następna faza: 3.**
+**Następna faza: 4.**
 
 ## Otwarte pytania
 
@@ -101,3 +101,9 @@ Wspólne dla każdej fazy:
 - 2026-10-25 (faza 2): tryb ciemny zostaje przy `prefers-color-scheme` (domyślny wariant `dark:`), a ciemne tokeny shadcn są w `@media (prefers-color-scheme: dark)`. Wariant `.dark` z szablonu shadcn zmieniłby działanie klas `dark:` na stronie głównej. `--background` i `--foreground` zachowują dotychczasowe wartości.
 - 2026-10-25 (faza 2): z bazy shadcn przyjęto regułę `* { border-color: var(--border); outline-color: ring/50 }`. Na stronie głównej zmienia ona wyłącznie kolor obrysu fokusu (np. przy nawigacji klawiaturą); reguły wszystkich klas strony są identyczne jak w fazie 1.
 - 2026-10-25 (faza 2): `lucide-react` (ikony z `components.json`) nie jest jeszcze zainstalowany; dojdzie z pierwszym komponentem, który go wymaga.
+- 2026-10-25 (faza 3): bez commitowanej migracji inicjalnej. W repozytorium nie ma jeszcze encji domenowych, a wymyślanie ich bez specyfikacji funkcji byłoby spekulacją. Kryterium zmieniono na: `db:migrate` działa na pustym schemacie i tworzy tabelę `mikro_orm_migrations`, a cały cykl „encja → `migration:create` → `migration:up` → tabela w bazie” sprawdzono tymczasową encją, usuniętą przed commitem. Pierwsza prawdziwa migracja powstanie z pierwszą encją funkcji.
+- 2026-10-25 (faza 3): MikroORM 7.2 (ESM-only), encje przez `defineEntity` rejestrowane jawnie w `src/entities/index.ts`. Do czasu pierwszej encji `discovery.warnWhenNoEntities: false`, bo inaczej MikroORM nie startuje.
+- 2026-10-25 (faza 3): `serverExternalPackages` niepotrzebne. Build Turbopack z importem `@devmentor/db` w Route Handlerze działał w `next start` i `next dev` (zapisy i odczyty na PostgreSQL). Next.js domyślnie traktuje `@mikro-orm/core` i `pg` jako zewnętrzne.
+- 2026-10-25 (faza 3): jeden plik `.env` w katalogu głównym. Next.js wczytuje go przez `loadEnvConfig` z `@next/env` w `next.config.ts` (sam z siebie czyta tylko `packages/app`), a konfiguracja CLI przez `process.loadEnvFile()`.
+- 2026-10-25 (faza 3): konfiguracja runtime (`createOrmOptions`, `getOrm`) jest oddzielona od konfiguracji CLI (`mikro-orm.config.ts` z Migratorem), żeby pakiet migracji i ścieżki plików nie trafiały do bundla aplikacji. `getOrm` przyjmuje `databaseUrl` od `app` zamiast czytać `process.env`, bo konfiguracja środowiska należy do `app` (AGENTS.md).
+- 2026-10-25 (faza 3): CLI ładuje TypeScript przez `tsx` (devDependency `@devmentor/db`, ustawione w sekcji `"mikro-orm"` w `package.json`).

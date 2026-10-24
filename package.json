@@ -10,7 +10,11 @@
     "build": "npm run build -w @devmentor/app",
     "start": "npm run start -w @devmentor/app",
     "lint": "eslint",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:migrate": "npm run db:migrate -w @devmentor/db --",
+    "db:migration:create": "npm run db:migration:create -w @devmentor/db --",
+    "db:migration:list": "npm run db:migration:list -w @devmentor/db --",
+    "db:migration:pending": "npm run db:migration:pending -w @devmentor/db --"
   },
   "devDependencies": {
     "eslint": "^9",

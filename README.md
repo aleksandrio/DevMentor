@@ -102,6 +102,18 @@ npm run dev
 
 Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost:3000).
 
+### Baza danych (PostgreSQL)
+
+Aplikacja buduje się i uruchamia bez bazy. Baza jest potrzebna do migracji i funkcji, które z niej korzystają.
+
+```bash
+cp .env.example .env     # DATABASE_URL dla lokalnej bazy z docker-compose.yml
+docker compose up -d     # PostgreSQL 17 na porcie 5432
+npm run db:migrate       # wykonuje oczekujące migracje MikroORM
+```
+
+Nową migrację po zmianie encji tworzysz poleceniem `npm run db:migration:create -- --name <nazwa>`.
+
 ### Dostępne skrypty
 
 | Skrypt          | Opis                                       |
@@ -111,6 +123,10 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 | `npm run start` | Uruchamia zbudowaną wersję produkcyjną     |
 | `npm run lint`  | Sprawdza kod i granice pakietów za pomocą ESLint |
 | `npm run typecheck` | Sprawdza typy w każdym pakiecie workspace |
+| `npm run db:migrate` | Wykonuje oczekujące migracje bazy danych |
+| `npm run db:migration:create` | Tworzy migrację na podstawie zmian w encjach |
+| `npm run db:migration:list` | Pokazuje wykonane migracje |
+| `npm run db:migration:pending` | Pokazuje oczekujące migracje |
 
 Skrypty uruchamiasz w katalogu głównym. `dev`, `build` i `start` delegują do pakietu `@devmentor/app`. Zależność dodajesz do pakietu, który jej używa, np. `npm install zod -w @devmentor/core`.
 
@@ -120,7 +136,7 @@ Skrypty uruchamiasz w katalogu głównym. `dev`, `build` i `start` delegują do 
 packages/
 ├── app/            # @devmentor/app: aplikacja Next.js (src/app/(frontend), src/app/(backend)/admin, public/)
 ├── core/           # @devmentor/core: logika domenowa
-├── db/             # @devmentor/db: dostęp do danych (tylko serwer)
+├── db/             # @devmentor/db: MikroORM (src/config.ts, src/entities, src/migrations), tylko serwer
 └── ui/             # @devmentor/ui: komponenty shadcn/ui (src/components), tokeny i style Tailwinda (globals.css)
 tsconfig.base.json  # wspólna konfiguracja TypeScriptu
 eslint.config.mjs   # ESLint dla całego repo, w tym granice pakietów

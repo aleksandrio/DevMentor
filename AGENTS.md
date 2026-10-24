@@ -18,7 +18,7 @@ O projekcie przeczytasz w `README.md`. Stos opisuje sekcja „Architektura i sto
 
 To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie. Odejście od nich (inna biblioteka, nowy pakiet, zmiana kierunku zależności) to decyzja architektoniczna: wymaga specyfikacji w `.ai/specs/` i zgody człowieka.
 
-> Stan na 2026-10-25: migracja trwa według `.ai/specs/2026-10-25-monorepo-migration.md`. Workspace i pakiety `app`, `core`, `db`, `ui` już istnieją (faza 1), granice pakietów egzekwuje ESLint, a shadcn/ui i podział na `(frontend)` i `(backend)/admin` działają (faza 2). MikroORM i Awilix dochodzą w kolejnych fazach. Sprawdź w specyfikacji, która faza jest bieżąca, zanim dodasz kod z tych obszarów.
+> Stan na 2026-10-25: migracja trwa według `.ai/specs/2026-10-25-monorepo-migration.md`. Workspace i pakiety `app`, `core`, `db`, `ui` już istnieją (faza 1), granice pakietów egzekwuje ESLint, shadcn/ui i podział na `(frontend)` i `(backend)/admin` działają (faza 2), a MikroORM z PostgreSQL jest skonfigurowany w `packages/db` (faza 3). Kontener Awilix dochodzi w fazie 4. Sprawdź w specyfikacji, która faza jest bieżąca, zanim dodasz kod z tych obszarów.
 
 ### Stos
 
@@ -81,6 +81,11 @@ app ──► ui ──► core (tylko typy i czyste funkcje pomocnicze)
 - Zmiany schematu wprowadzaj wyłącznie migracjami MikroORM generowanymi w `packages/db`. Migracje commituj razem z encjami. Nie edytuj migracji, która trafiła na gałąź główną: popraw błąd nową migracją. `schema:update` jest dozwolone tylko lokalnie do eksperymentów.
 - Kod bazy działa tylko na serwerze. Pakiet `db` nie może trafić do bundla klienta (używaj `server-only`, a w Next.js dodaj pakiety MikroORM do `serverExternalPackages`, jeśli bundler tego wymaga).
 - Encje to szczegół warstwy danych. Do `core` i do komponentów UI przekazuj typy domenowe albo DTO, a nie encje MikroORM.
+- Używamy MikroORM 7 (tylko ESM). Encje definiujesz przez `defineEntity` (bez dekoratorów) i rejestrujesz ręcznie w `packages/db/src/entities/index.ts`. Nie ma wykrywania po folderach. Gdy dodasz pierwszą encję, usuń `discovery.warnWhenNoEntities: false` z `packages/db/src/config.ts`.
+- Aplikacja dostaje ORM przez `getOrm({ databaseUrl })` z `@devmentor/db` (singleton w `globalThis`). Konfiguracja dla CLI jest w `packages/db/src/mikro-orm.config.ts` i tylko ona dołącza Migrator.
+- Zmienne środowiskowe trzymasz w jednym pliku `.env` w katalogu głównym repozytorium (wzór: `.env.example`). Czyta go Next.js (`loadEnvConfig` w `next.config.ts`) i CLI MikroORM. Nie twórz `.env` w pakietach.
+- Komendy bazy uruchamiasz w katalogu głównym: `npm run db:migrate`, `npm run db:migration:create -- --name <nazwa>`, `npm run db:migration:list`, `npm run db:migration:pending`. Lokalną bazę uruchamia `docker compose up -d`.
+- Aplikacja musi się budować i startować bez dostępnej bazy. Nie łącz się z bazą na poziomie modułu ani podczas prerenderowania; połączenie otwiera dopiero `getOrm()` wywołane w obsłudze żądania.
 
 ### Dependency Injection: Awilix
 
