@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind scans from the app's working directory; include this package too. */
+@source "../";
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
