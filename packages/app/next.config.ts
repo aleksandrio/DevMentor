@@ -1,12 +1,17 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
-import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
 
 const repoRoot = path.join(__dirname, "../..");
 
-// Shared .env files live in the repository root (also read by the MikroORM
-// CLI); Next.js on its own only looks in packages/app.
-loadEnvConfig(repoRoot, process.env.NODE_ENV !== "production");
+// The shared .env lives in the repository root (the MikroORM CLI reads the
+// same file). Next.js only loads .env files from packages/app, and calling
+// @next/env's loadEnvConfig here is a no-op: it caches the first load.
+// Variables already set in the environment take precedence.
+const rootEnvFile = path.join(repoRoot, ".env");
+if (existsSync(rootEnvFile)) {
+  process.loadEnvFile(rootEnvFile);
+}
 
 const nextConfig: NextConfig = {
   // The root AGENTS.md already carries the Next.js agent rules; keep `next dev`
