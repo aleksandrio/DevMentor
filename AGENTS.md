@@ -18,7 +18,7 @@ O projekcie przeczytasz w `README.md`. Stos opisuje sekcja „Architektura i sto
 
 To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie. Odejście od nich (inna biblioteka, nowy pakiet, zmiana kierunku zależności) to decyzja architektoniczna: wymaga specyfikacji w `.ai/specs/` i zgody człowieka.
 
-> Stan na 2026-10-25: migracja trwa według `.ai/specs/2026-10-25-monorepo-migration.md`. Workspace i pakiety `app`, `core`, `db`, `ui` już istnieją (faza 1), a granice pakietów egzekwuje ESLint. shadcn/ui, MikroORM i Awilix dochodzą w kolejnych fazach. Sprawdź w specyfikacji, która faza jest bieżąca, zanim dodasz kod z tych obszarów.
+> Stan na 2026-10-25: migracja trwa według `.ai/specs/2026-10-25-monorepo-migration.md`. Workspace i pakiety `app`, `core`, `db`, `ui` już istnieją (faza 1), granice pakietów egzekwuje ESLint, a shadcn/ui i podział na `(frontend)` i `(backend)/admin` działają (faza 2). MikroORM i Awilix dochodzą w kolejnych fazach. Sprawdź w specyfikacji, która faza jest bieżąca, zanim dodasz kod z tych obszarów.
 
 ### Stos
 
@@ -95,7 +95,10 @@ app ──► ui ──► core (tylko typy i czyste funkcje pomocnicze)
 - **Strony frontendowe** (publiczna część serwisu dla uczących się i mentorów) stylujesz klasami Tailwind CSS. Nie dodawaj innych bibliotek komponentów ani CSS-in-JS.
 - **Strony backendowe** (panel administracyjny, moderacja, zarządzanie treścią) budujesz z komponentów shadcn/ui. Ich wygląd zmieniasz przez warianty i klasy Tailwinda, a nie przez osobne arkusze CSS.
 - Komponenty shadcn/ui generujesz CLI shadcn do `packages/ui` i stamtąd je importujesz. Nie kopiuj ich do `packages/app`.
-- Jeden zestaw tokenów (kolory, typografia, odstępy) w konfiguracji Tailwinda w `packages/ui` obsługuje obie części serwisu.
+  - Dodawanie: `npx shadcn@latest add <komponent> -c packages/ui` (w katalogu głównym). Konfiguracja jest w `packages/ui/components.json` (styl `base-nova`, czyli komponenty na Base UI, `@base-ui/react`).
+  - Nie uruchamiaj `shadcn init` na `packages/ui`: CLI nie rozpoznaje tam frameworka, a konfiguracja jest już gotowa.
+  - Importujesz po ścieżce komponentu: `import { Button } from "@devmentor/ui/components/button"`. `@devmentor/ui` nie ma zbiorczego punktu wejścia; publiczne ścieżki to `components/*`, `lib/*`, `hooks/*` i `globals.css` (pole `exports`).
+- Jeden zestaw tokenów (kolory, typografia, odstępy, promienie) w `packages/ui/src/styles/globals.css` obsługuje obie części serwisu. Tryb ciemny wynika z `prefers-color-scheme` (domyślny wariant `dark:` Tailwinda). Nie dodawaj klasy `.dark` ani `@custom-variant dark` bez specyfikacji.
 - W App Routerze rozdzielaj części serwisu grupami tras, np. `app/(frontend)/...` i `app/(backend)/admin/...`, każda z własnym layoutem.
 
 ## Katalog `.ai/`: wspólna pamięć projektu

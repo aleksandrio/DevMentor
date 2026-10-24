@@ -82,7 +82,7 @@ Schemat bazy zmienia się wyłącznie przez migracje MikroORM przechowywane w `p
 - **Strony frontendowe**, czyli publiczna część serwisu dla uczących się i mentorów, są stylowane Tailwind CSS.
 - **Strony backendowe**, czyli panel administracyjny i inne strony zaplecza, są zbudowane z komponentów shadcn/ui.
 
-Obie części korzystają z komponentów i tokenów stylu z pakietu `ui` i są rozdzielone grupami tras App Routera, np. `(frontend)` i `(backend)`.
+Obie części korzystają z komponentów i tokenów stylu z pakietu `ui` i są rozdzielone grupami tras App Routera: `src/app/(frontend)` (strona główna) i `src/app/(backend)/admin` (panel pod adresem `/admin`). Komponenty shadcn/ui dodajesz poleceniem `npx shadcn@latest add <komponent> -c packages/ui`.
 
 Szczegółowe zasady dla agentów AI i osób rozwijających projekt opisuje [`AGENTS.md`](AGENTS.md).
 
@@ -118,10 +118,10 @@ Skrypty uruchamiasz w katalogu głównym. `dev`, `build` i `start` delegują do 
 
 ```
 packages/
-├── app/            # @devmentor/app: aplikacja Next.js (src/app: strony i layouty, public/: pliki statyczne)
+├── app/            # @devmentor/app: aplikacja Next.js (src/app/(frontend), src/app/(backend)/admin, public/)
 ├── core/           # @devmentor/core: logika domenowa
 ├── db/             # @devmentor/db: dostęp do danych (tylko serwer)
-└── ui/             # @devmentor/ui: komponenty i globalne style Tailwinda (globals.css)
+└── ui/             # @devmentor/ui: komponenty shadcn/ui (src/components), tokeny i style Tailwinda (globals.css)
 tsconfig.base.json  # wspólna konfiguracja TypeScriptu
 eslint.config.mjs   # ESLint dla całego repo, w tym granice pakietów
 .ai/                # specyfikacje, logi przebiegów AI i wnioski (zob. AGENTS.md)

@@ -54,9 +54,9 @@ Wspólne dla każdej fazy:
 - Zależności między pakietami w `package.json` (`workspace` przez `"*"`), granice w ESLint.
 - **Kryteria ukończenia:** kryteria wspólne + strona główna renderuje się z tymi samymi stylami (sprawdzone przez `npm run dev`/`npm run start` i pobranie strony) + celowe naruszenie granicy (np. import `next` w `core`) zgłaszane przez lint.
 
-### Faza 2: pakiet `ui` — shadcn/ui i podział na część frontendową i backendową
+### Faza 2: pakiet `ui` — shadcn/ui i podział na część frontendową i backendową — **ukończona 2026-10-25** (run: `.ai/runs/2026-10-25-monorepo-phase-2.md`)
 
-- Inicjalizacja shadcn/ui w `packages/ui` (`components.json`, `cn` z `clsx` i `tailwind-merge`, tokeny shadcn w `globals.css`), pierwszy komponent (`Button`).
+- Inicjalizacja shadcn/ui w `packages/ui` (`components.json`, `cn`, tokeny shadcn w `globals.css`), pierwsze komponenty (`Button`, `Card`, `Badge`).
 - Grupy tras `src/app/(frontend)` i `src/app/(backend)/admin` z osobnymi layoutami; prosta strona `/admin` z komponentów shadcn/ui.
 - **Kryteria ukończenia:** kryteria wspólne + `/admin` renderuje komponent shadcn/ui ze stylami, strona główna bez zmian.
 
@@ -78,7 +78,7 @@ Wspólne dla każdej fazy:
 - Usunięcie z `AGENTS.md` i `README.md` adnotacji o „docelowej” strukturze, aktualizacja sekcji „Uruchomienie lokalne”.
 - Przeniesienie tej specyfikacji do `implemented/`.
 
-**Następna faza: 2.**
+**Następna faza: 3.**
 
 ## Otwarte pytania
 
@@ -94,3 +94,10 @@ Wspólne dla każdej fazy:
 - 2026-10-25 (faza 1): zakaz importów „w głąb” pakietów zapisany jako `regex` w `no-restricted-imports`, bo wzorce gitignore nie łapały ścieżek względnych typu `../../../core/src/...`.
 - 2026-10-25 (faza 1): wzorce `.gitignore` dla `node_modules/`, `.next/`, `out/`, `build/` bez wiodącego `/`, żeby obejmowały też katalogi pakietów.
 - 2026-10-25 (faza 1): wynikowy CSS różni się od sprzed migracji tylko brakiem klas `.block` i `.visible`. Wcześniej Tailwind skanował cały katalog główny i znajdował te słowa w dokumentacji; aplikacja ich nie używa. Zob. `.ai/lessons/2026-10-25-tailwind-source-scan-monorepo.md`.
+- 2026-10-25 (faza 2): shadcn/ui w aktualnej wersji CLI (4.x) ze stylem `base-nova`, czyli komponentami na Base UI (`@base-ui/react`), a nie Radix. To domyślny wybór CLI, a API komponentów (`render`, `nativeButton`) różni się od wersji na Radix.
+- 2026-10-25 (faza 2): `cn` pochodzi z pakietu `cn` (zamiennik `clsx` + `tailwind-merge`, który generuje CLI), a nie z tych dwóch bibliotek, jak zakładał plan.
+- 2026-10-25 (faza 2): `shadcn init` nie działa na `packages/ui` (brak frameworka), więc bazę skonfigurowano ręcznie według szablonu `shadcn init --monorepo`. Komponenty generuje CLI (`add -c packages/ui`). Zob. `.ai/lessons/2026-10-25-shadcn-cli-in-ui-package.md`.
+- 2026-10-25 (faza 2): `@devmentor/ui` eksportuje ścieżki `components/*`, `lib/*`, `hooks/*` i `globals.css` zamiast zbiorczego `.`, zgodnie z konwencją shadcn dla monorepo. Usunięto pusty `src/index.ts`.
+- 2026-10-25 (faza 2): tryb ciemny zostaje przy `prefers-color-scheme` (domyślny wariant `dark:`), a ciemne tokeny shadcn są w `@media (prefers-color-scheme: dark)`. Wariant `.dark` z szablonu shadcn zmieniłby działanie klas `dark:` na stronie głównej. `--background` i `--foreground` zachowują dotychczasowe wartości.
+- 2026-10-25 (faza 2): z bazy shadcn przyjęto regułę `* { border-color: var(--border); outline-color: ring/50 }`. Na stronie głównej zmienia ona wyłącznie kolor obrysu fokusu (np. przy nawigacji klawiaturą); reguły wszystkich klas strony są identyczne jak w fazie 1.
+- 2026-10-25 (faza 2): `lucide-react` (ikony z `components.json`) nie jest jeszcze zainstalowany; dojdzie z pierwszym komponentem, który go wymaga.
