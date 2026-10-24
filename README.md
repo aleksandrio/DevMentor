@@ -36,7 +36,7 @@ Nauka programowania na własną rękę często kończy się utknięciem na probl
 
 ## Architektura
 
-> Migracja do tej architektury trwa według [`.ai/specs/2026-10-25-monorepo-migration.md`](.ai/specs/2026-10-25-monorepo-migration.md). Workspace i pakiety już działają. shadcn/ui, MikroORM z PostgreSQL i kontener Awilix dochodzą w kolejnych fazach.
+> Migracja do tej architektury trwa według [`.ai/specs/2026-10-25-monorepo-migration.md`](.ai/specs/2026-10-25-monorepo-migration.md). Działają: workspace i pakiety, shadcn/ui, MikroORM z PostgreSQL oraz kontener Awilix z pierwszym przepływem żądania (status bazy na `/admin`).
 
 DevMentor to monorepo oparte na npm workspaces. Kod jest podzielony na pakiety w katalogu `packages/`:
 
@@ -68,7 +68,7 @@ app ──► ui ──► core
 ### Przepływ żądania
 
 1. Żądanie trafia do Server Component, Server Action albo Route Handlera w `packages/app`.
-2. Aplikacja tworzy zakres kontenera Awilix (`container.createScope()`) z własnym `EntityManager` MikroORM (`em.fork()`).
+2. Aplikacja tworzy zakres kontenera Awilix (`withRequestScope` w `packages/app/src/server/request-scope.ts`: `container.createScope()`) z własnym `EntityManager` MikroORM (`em.fork()`).
 3. Z zakresu rozwiązywany jest serwis z `core`. Serwis dostaje swoje zależności, np. repozytoria z `db`, przez konstruktor.
 4. Repozytorium odczytuje lub zapisuje dane w PostgreSQL przez MikroORM, korzystając ze wspólnej puli połączeń.
 5. Wynik w postaci typów domenowych lub DTO wraca do warstwy `app`, która renderuje go komponentami z `ui`.

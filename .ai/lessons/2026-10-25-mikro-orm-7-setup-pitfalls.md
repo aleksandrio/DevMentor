@@ -25,6 +25,10 @@ Konfiguracja MikroORM 7.2 (ESM-only, wymaga Node ≥ 22.17) w `packages/db`, zan
 - `mikro-orm.config.ts` sam wczytuje główny `.env` przez `process.loadEnvFile()` (wbudowane w Node; nie nadpisuje zmiennych już ustawionych w powłoce).
 - Konfiguracja dla CLI importuje Migrator, a konfiguracja runtime (`getOrm`) nie, więc pakiet migracji nie trafia do bundla aplikacji.
 
+## Uzupełnienie (faza 4, 2026-10-25)
+
+`MikroORM.init` w v7 nie otwiera połączenia: łączy się dopiero przy pierwszym zapytaniu (`MikroORM.js`: `init` robi tylko odkrywanie metadanych i tworzy `EntityManager`). Niedostępna baza nie przerywa więc budowania kontenera. Błąd pojawia się w zapytaniu, gdzie serwis może go obsłużyć (np. status `down`).
+
 ## Reguła na przyszłość
 
-Przy pracy z MikroORM 7 nie zakładaj zachowań z v5/v6: encje rejestruj jawnie w `entities/index.ts`, `.env` ładuj sam w konfiguracji CLI, a zmiany konfiguracji CLI sprawdzaj komendą `npm run db:migration:pending` na prawdziwej bazie.
+Przy pracy z MikroORM 7 nie zakładaj zachowań z v5/v6: encje rejestruj jawnie w `entities/index.ts`, `.env` ładuj sam w konfiguracji CLI, a zmiany konfiguracji CLI sprawdzaj komendą `npm run db:migration:pending` na prawdziwej bazie. Błędy połączenia obsługuj przy zapytaniu, nie przy `getOrm()`, bo `init` nie łączy się z bazą.

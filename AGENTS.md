@@ -18,7 +18,7 @@ O projekcie przeczytasz w `README.md`. Stos opisuje sekcja „Architektura i sto
 
 To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie. Odejście od nich (inna biblioteka, nowy pakiet, zmiana kierunku zależności) to decyzja architektoniczna: wymaga specyfikacji w `.ai/specs/` i zgody człowieka.
 
-> Stan na 2026-10-25: migracja trwa według `.ai/specs/2026-10-25-monorepo-migration.md`. Workspace i pakiety `app`, `core`, `db`, `ui` już istnieją (faza 1), granice pakietów egzekwuje ESLint, shadcn/ui i podział na `(frontend)` i `(backend)/admin` działają (faza 2), a MikroORM z PostgreSQL jest skonfigurowany w `packages/db` (faza 3). Kontener Awilix dochodzi w fazie 4. Sprawdź w specyfikacji, która faza jest bieżąca, zanim dodasz kod z tych obszarów.
+> Stan na 2026-10-25: migracja trwa według `.ai/specs/2026-10-25-monorepo-migration.md`. Workspace i pakiety `app`, `core`, `db`, `ui` już istnieją (faza 1), granice pakietów egzekwuje ESLint, shadcn/ui i podział na `(frontend)` i `(backend)/admin` działają (faza 2), MikroORM z PostgreSQL jest skonfigurowany w `packages/db` (faza 3), a kontener Awilix i pierwszy przepływ żądania (status bazy na `/admin`) działają (faza 4). Została faza 5: domknięcie dokumentacji. Sprawdź w specyfikacji, która faza jest bieżąca, zanim dodasz kod z tych obszarów.
 
 ### Stos
 
@@ -94,6 +94,10 @@ app ──► ui ──► core (tylko typy i czyste funkcje pomocnicze)
 - Czasy życia: konfiguracja, instancja ORM i klienci usług zewnętrznych to `singleton`. Wszystko, co zależy od `EntityManager` (repozytoria, serwisy domenowe), to `scoped`. Dla każdego żądania lub Server Action tworzysz `container.createScope()` z rejestracją sforkowanego `em`.
 - Zależności rozwiązujesz tylko w kodzie serwerowym w `app`: Server Components, Server Actions, Route Handlers. Komponenty klienckie i pakiet `ui` nigdy nie korzystają z kontenera.
 - Nie wywołuj `container.resolve()` w głębi logiki (wzorzec service locator). Rozwiązuj zależność na brzegu żądania i przekazuj ją dalej.
+- Kontener jest w `packages/app/src/server/container.ts`, a typ `Cradle` wymienia każdą zależność. Nową zależność rejestrujesz jawnie: dopisujesz linię w `register` i pole w `Cradle`. Nie używaj `loadModules` ani rejestracji przez skanowanie folderów.
+- Na brzegu żądania korzystasz z `withRequestScope` z `packages/app/src/server/request-scope.ts`, np. `await withRequestScope(({ systemHealthService }) => systemHealthService.checkDatabase())`. Helper czeka na `connection()`, więc baza nigdy nie jest odpytywana podczas prerenderowania. Tworzy też scope z własnym `em.fork()` i po zakończeniu go zamyka.
+- Komponent, który pobiera dane przez `withRequestScope`, umieszczasz w `<Suspense>` (włączone `cacheComponents`). Statyczna część strony zostaje wtedy prerenderowana, a dane są doładowywane przy żądaniu. Wzorzec: `packages/app/src/app/(backend)/admin/_components/database-status.tsx`.
+- Wzorzec pionowego przepływu: port i serwis w `core` (`core/src/health/`), implementacja portu w `db` (`db/src/health/`), rejestracja w `container.ts`, użycie w Server Component. Kontener rejestruje porty zależne od bazy tylko wtedy, gdy ustawiono `DATABASE_URL`; bez niej rejestruje `null`.
 
 ### Interfejs: Tailwind CSS i shadcn/ui
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge } from "@devmentor/ui/components/badge";
+import { Suspense } from "react";
 import { Button } from "@devmentor/ui/components/button";
 import {
   Card,
@@ -9,6 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@devmentor/ui/components/card";
+import {
+  DatabaseStatus,
+  DatabaseStatusBadge,
+} from "./_components/database-status";
 
 export default function AdminPage() {
   return (
@@ -22,7 +26,9 @@ export default function AdminPage() {
       </CardHeader>
       <CardContent className="flex items-center gap-2 text-sm">
         <span className="text-muted-foreground">Baza danych:</span>
-        <Badge variant="outline">jeszcze niepodłączona</Badge>
+        <Suspense fallback={<DatabaseStatusBadge />}>
+          <DatabaseStatus />
+        </Suspense>
       </CardContent>
       <CardFooter>
         <Button nativeButton={false} render={<Link href="/" />}>

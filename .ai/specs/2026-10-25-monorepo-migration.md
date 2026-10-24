@@ -67,18 +67,24 @@ Wspólne dla każdej fazy:
 - Pakiety MikroORM w `serverExternalPackages` aplikacji, jeśli bundler tego wymaga.
 - **Kryteria ukończenia:** kryteria wspólne (build bez działającej bazy) + na lokalnym PostgreSQL `db:migrate` działa, a migracja wygenerowana z encji tworzy tabelę (zmienione 2026-10-25, zob. „Decyzje i zmiany”).
 
-### Faza 4: Awilix — composition root i pierwszy przepływ żądania
+### Faza 4: Awilix — composition root i pierwszy przepływ żądania — **ukończona 2026-10-25** (run: `.ai/runs/2026-10-25-monorepo-phase-4.md`)
 
 - Kontener w `packages/app/src/server/container.ts`: singleton ORM i konfiguracji, `scoped` repozytoria i serwisy, `createScope()` z `em.fork()` na żądanie.
 - Pierwszy pionowy przepływ (port repozytorium i serwis w `core`, implementacja w `db`, użycie w Server Component) jako wzorzec dla kolejnych funkcji, np. „health check” bazy na stronie `/admin`.
 - **Kryteria ukończenia:** kryteria wspólne + przepływ działa na lokalnej bazie; serwisy w `core` nie importują Awilix.
+- **Projekt szczegółowy (dopisany 2026-10-25 przed implementacją):**
+  - `core/src/health/`: typ `DatabaseStatus` (`up` z czasem odpowiedzi, `down` z komunikatem, `not-configured`), port `DatabaseHealthProbe { ping(): Promise<void> }` i serwis `SystemHealthService` (`checkDatabase()`), który mierzy czas `ping()` i zamienia wyjątek na `down`. Serwis dostaje `databaseHealthProbe: DatabaseHealthProbe | null`; `null` oznacza brak skonfigurowanej bazy.
+  - `db/src/health/`: `MikroOrmDatabaseHealthProbe` (implementacja portu, `select 1` na wstrzykniętym `em`).
+  - `app/src/server/`: `config.ts` (odczyt `DATABASE_URL`, konfiguracja środowiska należy do `app`), `container.ts` (kontener Awilix w trybie `PROXY` i `strict`; `config` i `orm` jako singletony; sonda i serwis jako `scoped`; bez `DATABASE_URL` sonda jest rejestrowana jako `null`, a ORM nie powstaje), `request-scope.ts` (`withRequestScope(fn)`: `await connection()`, `createScope()`, rejestracja `em: orm.em.fork()`, wywołanie `fn(cradle)`, `dispose()` w `finally`).
+  - `/admin`: status bazy w osobnym asynchronicznym komponencie w `<Suspense>`. Statyczna powłoka strony zostaje prerenderowana, a status jest liczony przy każdym żądaniu.
+  - ORM w MikroORM 7 łączy się leniwie (`init` nie otwiera połączenia), więc niedostępna baza objawia się jako `down`, a nie jako błąd strony.
 
 ### Faza 5: domknięcie
 
 - Usunięcie z `AGENTS.md` i `README.md` adnotacji o „docelowej” strukturze, aktualizacja sekcji „Uruchomienie lokalne”.
 - Przeniesienie tej specyfikacji do `implemented/`.
 
-**Następna faza: 4.**
+**Następna faza: 5.**
 
 ## Otwarte pytania
 
@@ -108,3 +114,7 @@ Wspólne dla każdej fazy:
 - 2026-10-25 (faza 3): konfiguracja runtime (`createOrmOptions`, `getOrm`) jest oddzielona od konfiguracji CLI (`mikro-orm.config.ts` z Migratorem), żeby pakiet migracji i ścieżki plików nie trafiały do bundla aplikacji. `getOrm` przyjmuje `databaseUrl` od `app` zamiast czytać `process.env`, bo konfiguracja środowiska należy do `app` (AGENTS.md).
 - 2026-10-25 (faza 3): CLI ładuje TypeScript przez `tsx` (devDependency `@devmentor/db`, ustawione w sekcji `"mikro-orm"` w `package.json`).
 - 2026-10-25 (przed fazą 4): człowiek zdecydował, że przy sprzeczności z nieśledzonym `.ai/specs/engineering-standards.md` obowiązuje AGENTS.md. Faza 4 idzie według AGENTS.md: kontener Awilix w `packages/app/src/server/container.ts`, kierunek `app → core`, `app → db → core`. Zob. `.ai/lessons/2026-10-25-agents-md-over-foreign-specs.md`.
+- 2026-10-25 (faza 4): `withRequestScope` woła `connection()` z `next/server`, zanim dotknie bazy, więc żaden kod z kontenera nie wykona zapytania podczas prerenderowania. `/admin` jest częściowo prerenderowane (◐): statyczna powłoka plus status bazy dosyłany strumieniowo w `<Suspense>`.
+- 2026-10-25 (faza 4): przy stanie `down` panel pokazuje tylko „niedostępna”, a przyczynę (np. `ECONNREFUSED host:port`) zapisuje w logu serwera. `/admin` nie ma jeszcze uwierzytelniania, więc szczegóły połączenia nie trafiają na stronę.
+- 2026-10-25 (faza 4): kontener jest cache'owany na poziomie modułu (`getContainer`), a nie w `globalThis`. Po HMR budowany jest od nowa, ale ORM i pula połączeń pochodzą z singletonu `getOrm` w `globalThis` (sprawdzone: 1 połączenie po edycjach `container.ts`).
+- 2026-10-25 (faza 4): serwis i port zależne od bazy dostają `null`, gdy brakuje `DATABASE_URL`; serwis zwraca wtedy `not-configured`. Dzięki temu aplikacja działa bez bazy, a decyzja o konfiguracji zapada w composition root, a nie w komponentach.

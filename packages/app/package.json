@@ -13,6 +13,7 @@
     "@devmentor/db": "*",
     "@devmentor/ui": "*",
     "@next/env": "^16.4.3",
+    "awilix": "^13.0.5",
     "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0"
