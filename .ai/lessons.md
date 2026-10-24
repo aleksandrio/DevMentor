@@ -16,11 +16,16 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 
 - [Nieaktualne typy w `.next/dev/types` psują typecheck i build po przeniesieniu tras](lessons/2026-10-25-stale-next-dev-types.md): błąd TS w `.next/dev/types/...` po zmianie struktury tras usuwasz przez `rm -rf packages/app/.next/dev`, a nie zmianą kodu.
 - [Uruchamianie modułów serwerowych poza Next.js](lessons/2026-10-25-run-server-modules-in-node.md): kod z `server-only` uruchamiasz w skrypcie przez `node --conditions=react-server --import tsx plik.mts` (`.mts`, bo `@devmentor/app` nie jest ESM); kodu z `connection()` nie testuj w ten sposób, tylko przez `next start`/`next dev`.
+- [`loadEnvConfig` z `@next/env` w `next.config.ts` nie wczytuje drugiego katalogu](lessons/2026-10-25-next-env-loadenvconfig-cache.md): `.env` z katalogu głównego wczytuj przez `process.loadEnvFile()`, bo `loadEnvConfig` zwraca wynik pierwszego ładowania; zmienne sprawdzaj w prawdziwym `next start`/`next dev`.
 
 ## Baza danych
 
 - [MikroORM 7: brak encji blokuje start, CLI nie czyta `.env` i potrzebuje loadera TS](lessons/2026-10-25-mikro-orm-7-setup-pitfalls.md): przy pustej liście encji wymagane jest `discovery.warnWhenNoEntities: false`; CLI ładuje `.ts` przez `tsx` (`"mikro-orm".tsLoader` w `packages/db/package.json`), a `.env` wczytuje sama konfiguracja przez `process.loadEnvFile()`; `init` łączy się leniwie, więc błędy połączenia obsługuj przy zapytaniu.
 - [Weryfikacja na PostgreSQL bez Dockera](lessons/2026-10-25-postgres-without-docker.md): gdy gniazdo Dockera jest niedostępne, uruchom `embedded-postgres` w `/tmp` (poza zależnościami projektu) i zanotuj to w logu przebiegu.
+
+## Monorepo i npm
+
+- [Skrypt delegujący do workspace musi kończyć się `--`](lessons/2026-10-25-npm-workspace-script-args.md): skrypty `npm run <x> -w <pakiet>` w głównym `package.json` kończ `--`, inaczej argumenty (np. `-p 3001`) przejmuje wewnętrzny npm.
 
 ## Proces
 

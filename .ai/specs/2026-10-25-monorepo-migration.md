@@ -79,12 +79,13 @@ Wspólne dla każdej fazy:
   - `/admin`: status bazy w osobnym asynchronicznym komponencie w `<Suspense>`. Statyczna powłoka strony zostaje prerenderowana, a status jest liczony przy każdym żądaniu.
   - ORM w MikroORM 7 łączy się leniwie (`init` nie otwiera połączenia), więc niedostępna baza objawia się jako `down`, a nie jako błąd strony.
 
-### Faza 5: domknięcie
+### Faza 5: domknięcie — **kod i dokumentacja ukończone 2026-10-25** (run: `.ai/runs/2026-10-25-monorepo-phase-5.md`); przeniesienie do `implemented/` czeka na scalenie do `main`
 
 - Usunięcie z `AGENTS.md` i `README.md` adnotacji o „docelowej” strukturze, aktualizacja sekcji „Uruchomienie lokalne”.
-- Przeniesienie tej specyfikacji do `implemented/`.
+- Przeniesienie tej specyfikacji do `implemented/` — dopiero po scaleniu `feat/monorepo-migration` do `main` (AGENTS.md: „Wdrożona, kod na gałęzi głównej”). Scalenie wymaga decyzji człowieka.
+- Weryfikacja całości z czystego klona: `npm ci`, `lint`, `typecheck`, `build`, testy, `start`/`dev`, migracje.
 
-**Następna faza: 5.**
+**Wszystkie fazy zrealizowane na gałęzi `feat/monorepo-migration`. Pozostało: scalenie do `main` i `git mv` tej specyfikacji do `implemented/` ze statusem `implemented`.**
 
 ## Otwarte pytania
 
@@ -118,3 +119,7 @@ Wspólne dla każdej fazy:
 - 2026-10-25 (faza 4): przy stanie `down` panel pokazuje tylko „niedostępna”, a przyczynę (np. `ECONNREFUSED host:port`) zapisuje w logu serwera. `/admin` nie ma jeszcze uwierzytelniania, więc szczegóły połączenia nie trafiają na stronę.
 - 2026-10-25 (faza 4): kontener jest cache'owany na poziomie modułu (`getContainer`), a nie w `globalThis`. Po HMR budowany jest od nowa, ale ORM i pula połączeń pochodzą z singletonu `getOrm` w `globalThis` (sprawdzone: 1 połączenie po edycjach `container.ts`).
 - 2026-10-25 (faza 4): serwis i port zależne od bazy dostają `null`, gdy brakuje `DATABASE_URL`; serwis zwraca wtedy `not-configured`. Dzięki temu aplikacja działa bez bazy, a decyzja o konfiguracji zapada w composition root, a nie w komponentach.
+- 2026-10-25 (faza 5): **korekta decyzji z fazy 3.** `loadEnvConfig(repoRoot)` w `next.config.ts` nie działało, bo `@next/env` zwraca wynik pierwszego ładowania (dla `packages/app`). Zastąpione przez `process.loadEnvFile()` dla głównego `.env`, ten sam mechanizm co w CLI MikroORM. Zależność `@next/env` usunięta. Obsługiwany jest tylko `.env`, bez `.env.local` i `.env.development`. Zob. `.ai/lessons/2026-10-25-next-env-loadenvconfig-cache.md`.
+- 2026-10-25 (faza 5): skrypty `dev`, `build`, `start` w głównym `package.json` kończą się `--`, bo inaczej `npm run start -- -p <port>` nie działało. Zob. `.ai/lessons/2026-10-25-npm-workspace-script-args.md`.
+- 2026-10-25 (faza 5): `"engines": { "node": ">=22.17" }` w głównym `package.json` i wymóg w README, bo MikroORM 7 wymaga Node.js ≥ 22.17.
+- 2026-10-25 (faza 5): repozytorium nie ma testów automatycznych ani skryptu `test` (`npm test` → „Missing script”). Weryfikacja migracji opiera się na lint, typecheck, build i sprawdzeniach uruchomieniowych. Testy są poza zakresem tej specyfikacji.

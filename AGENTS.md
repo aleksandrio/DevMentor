@@ -32,7 +32,7 @@ To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie
 | Dependency Injection | Awilix | Jeden kontener złożony w pakiecie `app`. |
 | Style stron frontendowych | Tailwind CSS | Publiczna część serwisu (strony dla uczących się i mentorów). |
 | Komponenty stron backendowych | shadcn/ui (na Tailwindzie) | Panel administracyjny i inne strony zaplecza. |
-| Monorepo | npm workspaces | Pakiety w katalogu `packages/`. Node.js ≥ 22.17 (wymóg MikroORM 7, pole `engines`). |
+| Monorepo | npm workspaces | Pakiety w katalogu `packages/`. Node.js ≥ 22.17 (wymóg MikroORM 7, pole `engines`). Skrypty w katalogu głównym delegujące do pakietu kończą się `--`, żeby przekazywały argumenty (`npm run dev -- -p 3001`). |
 | Jakość | ESLint, `tsc` | `npm run lint`, `npm run typecheck` i `npm run build` przed każdym commitem. |
 
 Nie dodawaj alternatyw dla powyższych narzędzi (innego ORM-a, query buildera, kontenera DI, biblioteki komponentów czy CSS-in-JS) bez specyfikacji.
@@ -83,7 +83,7 @@ app ──► ui ──► core (tylko typy i czyste funkcje pomocnicze)
 - Encje to szczegół warstwy danych. Do `core` i do komponentów UI przekazuj typy domenowe albo DTO, a nie encje MikroORM.
 - Używamy MikroORM 7 (tylko ESM). Encje definiujesz przez `defineEntity` (bez dekoratorów) i rejestrujesz ręcznie w `packages/db/src/entities/index.ts`. Nie ma wykrywania po folderach. Gdy dodasz pierwszą encję, usuń `discovery.warnWhenNoEntities: false` z `packages/db/src/config.ts`.
 - Aplikacja dostaje ORM przez `getOrm({ databaseUrl })` z `@devmentor/db` (singleton w `globalThis`). Konfiguracja dla CLI jest w `packages/db/src/mikro-orm.config.ts` i tylko ona dołącza Migrator.
-- Zmienne środowiskowe trzymasz w jednym pliku `.env` w katalogu głównym repozytorium (wzór: `.env.example`). Czyta go Next.js (`loadEnvConfig` w `next.config.ts`) i CLI MikroORM. Nie twórz `.env` w pakietach.
+- Zmienne środowiskowe trzymasz w jednym pliku `.env` w katalogu głównym repozytorium (wzór: `.env.example`). Czytają go Next.js i CLI MikroORM, oba przez `process.loadEnvFile()` (w `packages/app/next.config.ts` i `packages/db/src/mikro-orm.config.ts`). Zmienne ustawione w powłoce mają pierwszeństwo. Obsługiwany jest tylko `.env`, bez wariantów `.env.local` i `.env.development`. Nie twórz `.env` w pakietach i nie używaj do tego `loadEnvConfig` z `@next/env` (zob. `.ai/lessons.md`).
 - Komendy bazy uruchamiasz w katalogu głównym: `npm run db:migrate`, `npm run db:migration:create -- --name <nazwa>`, `npm run db:migration:list`, `npm run db:migration:pending`. Lokalną bazę uruchamia `docker compose up -d`.
 - Aplikacja musi się budować i startować bez dostępnej bazy. Nie łącz się z bazą na poziomie modułu ani podczas prerenderowania; połączenie otwiera dopiero `getOrm()` wywołane w obsłudze żądania.
 
