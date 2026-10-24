@@ -20,3 +20,7 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 
 - [MikroORM 7: brak encji blokuje start, CLI nie czyta `.env` i potrzebuje loadera TS](lessons/2026-10-25-mikro-orm-7-setup-pitfalls.md): przy pustej liście encji wymagane jest `discovery.warnWhenNoEntities: false`; CLI ładuje `.ts` przez `tsx` (`"mikro-orm".tsLoader` w `packages/db/package.json`), a `.env` wczytuje sama konfiguracja przez `process.loadEnvFile()`.
 - [Weryfikacja na PostgreSQL bez Dockera](lessons/2026-10-25-postgres-without-docker.md): gdy gniazdo Dockera jest niedostępne, uruchom `embedded-postgres` w `/tmp` (poza zależnościami projektu) i zanotuj to w logu przebiegu.
+
+## Proces
+
+- [AGENTS.md ma pierwszeństwo przed `engineering-standards.md`](lessons/2026-10-25-agents-md-over-foreign-specs.md): przy sprzeczności stosuj AGENTS.md (`db → core`, kontener Awilix w `packages/app`); pliku `.ai/specs/engineering-standards.md` nie edytuj, nie przenoś i nie commituj bez polecenia człowieka.
