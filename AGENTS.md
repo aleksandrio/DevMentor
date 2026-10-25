@@ -213,6 +213,7 @@ Własna implementacja zamiast `apiHandler`/`makeCrudRoute`, `CrudForm` albo `Dat
 ├── agentic.config.json     # konfiguracja potoku skilli om-* (bramka walidacji, etykiety, bramka QA)
 ├── trackers/               # deskryptor trackera (github.md) używany przez skille om-*
 ├── browsers/               # deskryptor przeglądarki (agent-browser.md) używany przez skille om-*
+├── skills/                 # nakładki repozytorium na skille om-* (tylko różnice; same skille: npx skills add do .claude/skills/)
 ├── analysis/               # raporty generowane przez skille om-*
 ├── scripts/                # skrypty środowiska generowane przez skille om-*
 ├── qa/                     # stan QA; artifacts_*/, test-env.json i test-env.env są w .gitignore
