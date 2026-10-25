@@ -1,7 +1,7 @@
 # Konfiguracja potoku agentów (om-setup-agent-pipeline)
 
 - **Status:** done
-- **Start / koniec:** 2026-10-25 11:03 / 2026-10-25 11:12
+- **Start / koniec:** 2026-10-25 11:03 / 2026-10-25 11:25
 - **Agent / model:** Claude Code / claude-opus-5-5 (cezar, skill `om-setup-agent-pipeline`)
 - **Specyfikacja:** brak (konfiguracja narzędzi i dokumentów procesu, bez zmian w kodzie aplikacji)
 - **Gałąź / commity:** cez/0aea9054
@@ -23,18 +23,17 @@ Skonfigurować potok skilli `om-*`: `.ai/agentic.config.json`, deskryptory track
 
 - `jq .` na konfiguracji: poprawny JSON.
 - Ścieżki przywołane w nowych dokumentach sprawdzone w repozytorium.
-- Sprawdzenie pokrycia skilli: `SKILL_COVERAGE_MISSING`. Brakuje praktycznie całej kolekcji poza dwoma zainstalowanymi skillami.
+- Sprawdzenie pokrycia skilli: `SKILL_COVERAGE_MISSING`. To fałszywy alarm: człowiek wskazał, że skille dostarcza cezar. Potwierdzone w kodzie cezara (`skills-provision.ts`): kolekcja `open-mercato/skills` jest kopiowana do worktree na żądanie, przy starcie zadania.
 - Nie uruchamiano lint, testów ani buildu: zmiana nie dotyka kodu.
 
 ## Wynik
 
-Konfiguracja gotowa. Skille delegujące do brakujących skilli (np. `om-auto-review-pr`, `om-code-review`, `om-fix`) zadziałają dopiero po instalacji całej kolekcji.
+Konfiguracja gotowa. Kolekcja skilli jest dostępna przez cezar, więc nie trzeba niczego doinstalowywać.
 
 ## Następne kroki / blokery
 
-- Zainstalować kolekcję: `npx skills add <owner>/<repo> --skill '*'`. Źródło instalacji nie jest znane i trzeba je podać.
-- Po instalacji ponownie uruchomić sprawdzenie pokrycia z `om-setup-agent-pipeline/references/skill-coverage.md`.
+Brak. Poza cezarem kolekcję instaluje się przez `npx skills add open-mercato/skills --skill '*'`.
 
 ## Wnioski
 
-Brak nowych.
+- [Skille `om-*` dostarcza cezar przy starcie zadania](../lessons/2026-10-25-cezar-provisions-om-skills.md)
