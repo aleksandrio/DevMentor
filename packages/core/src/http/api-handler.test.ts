@@ -49,6 +49,17 @@ describe("apiHandler", () => {
     expect(limited.headers.get("Retry-After")).toBe("42");
   });
 
+  it("answers null data for a handler without a result", async () => {
+    expect((await call(apiHandler(async () => undefined, { auth: "public" }))).body).toEqual({ ok: true, data: null });
+    const empty = apiHandler(async () => new ApiResponse(undefined, { status: 202 }), { auth: "public" });
+    expect(await call(empty)).toMatchObject({ status: 202, body: { ok: true, data: null } });
+  });
+
+  it("passes the route params to the handler", async () => {
+    const handler = apiHandler(async ({ params }) => params, { auth: "public" });
+    expect((await call(handler, { params: { id: "42" } })).body.data).toEqual({ id: "42" });
+  });
+
   it("hides unexpected errors behind a generic 500", async () => {
     const handler = apiHandler(async () => Promise.reject(new Error("password=hunter2 at db.ts:12")), { auth: "public" });
     const result = await call(handler);

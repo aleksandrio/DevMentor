@@ -125,7 +125,16 @@ npx playwright install chromium   # jednorazowo: przeglądarka dla Playwrighta
 npm run test:e2e                  # build, next start na porcie 3100, testy w Chromium
 ```
 
-Testy są w `packages/app/e2e/`. Jeśli w `.env` jest `DATABASE_URL`, testy oczekują działającej bazy (uruchom wcześniej `docker compose up -d` i `npm run db:migrate`) i obejmują też rejestrację, logowanie i panel `/admin/users`. Testy jednostkowe (Vitest, `packages/core`) uruchamia `npm run test`.
+Testy są w `packages/app/e2e/`. Jeśli w `.env` jest `DATABASE_URL`, testy oczekują działającej bazy (uruchom wcześniej `docker compose up -d` i `npm run db:migrate`) i obejmują też rejestrację, logowanie i panel `/admin/users`. ### Testy jednostkowe i integracyjne
+
+```bash
+npm run test                      # Vitest, wszystkie pakiety, wymagane 100% pokrycia
+npx agent-browser install         # jednorazowo: Chrome dla agent-browser
+npm run test:integration          # PostgreSQL z testcontainers (Docker), build, next start, testy przez agent-browser
+npm run app:ephemeral             # tymczasowa baza i aplikacja do ręcznego sprawdzania, do Ctrl+C
+```
+
+Testy integracyjne i `agent-browser` wymagają Node.js ≥ 24 i działającego Dockera. CI na GitHub Actions (`.github/workflows/ci.yml`) uruchamia na każdym pull requeście lint, typecheck, audit, testy jednostkowe, build, testy integracyjne i testy e2e (Playwright z bazą).
 
 ### Dostępne skrypty
 
@@ -136,7 +145,9 @@ Testy są w `packages/app/e2e/`. Jeśli w `.env` jest `DATABASE_URL`, testy ocze
 | `npm run start` | Uruchamia zbudowaną wersję produkcyjną     |
 | `npm run lint`  | Sprawdza kod i granice pakietów za pomocą ESLint |
 | `npm run typecheck` | Sprawdza typy w każdym pakiecie workspace |
-| `npm run test` | Uruchamia testy jednostkowe (Vitest) |
+| `npm run test` | Uruchamia testy jednostkowe (Vitest) z progiem pokrycia 100% |
+| `npm run test:integration` | Testy integracyjne: PostgreSQL z testcontainers, aplikacja i agent-browser |
+| `npm run app:ephemeral` | Tymczasowa baza i aplikacja do ręcznego sprawdzania |
 | `npm run test:e2e` | Buduje aplikację i uruchamia testy end-to-end w Playwright (Chromium) |
 | `npm run audit` | Sprawdza zależności produkcyjne (`npm audit`, próg high) |
 | `npm run db:migrate` | Wykonuje oczekujące migracje bazy danych |

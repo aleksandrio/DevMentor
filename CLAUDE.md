@@ -25,7 +25,8 @@ Nazwy plików: `YYYY-MM-DD-slug.md`, gdzie data to dzień utworzenia, a slug jes
 3. Każdy autonomiczny przebieg prowadzi log w `.ai/runs/`: zakładasz go na starcie, domykasz na końcu i zapisujesz w nim także porażki.
 4. Po nieoczywistym bugfixie, odkrytej pułapce albo korekcie od człowieka zapisz wniosek w `.ai/lessons/` i dopisz linię do `.ai/lessons.md`.
 5. Po wdrożeniu przenieś specyfikację przez `git mv` do `implemented/` i ustaw jej status. Pliki `.ai/` commituj razem z kodem.
-6. Złożone zadania zaczynaj od planu, a przed ogłoszeniem końca sam sprawdź, że zmiana działa. Szczegóły są w sekcji „Sposób pracy” w `AGENTS.md`.
+6. Każda nowa funkcja ma 100% pokrycia testami jednostkowymi (linie, gałęzie, funkcje, instrukcje). Próg egzekwują `npm run test` i CI. Bez komentarzy `v8 ignore` i nowych wyłączeń z pomiaru. Szczegóły są w sekcji „Jakość kodu i przegląd” i „Testy” w `AGENTS.md`.
+7. Złożone zadania zaczynaj od planu, a przed ogłoszeniem końca sam sprawdź, że zmiana działa. Szczegóły są w sekcji „Sposób pracy” w `AGENTS.md`.
 
 ## Architektura
 

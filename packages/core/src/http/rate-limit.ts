@@ -71,10 +71,9 @@ export class FailureRateLimiter {
     }
     if (this.windows.size >= MAX_TRACKED_KEYS) {
       // Still full: forget the oldest window rather than grow without bound.
-      const oldestKey = this.windows.keys().next().value;
-      if (oldestKey !== undefined) {
-        this.windows.delete(oldestKey);
-      }
+      // Maps iterate in insertion order, so the first key is the oldest.
+      const [oldestKey] = this.windows.keys();
+      this.windows.delete(oldestKey);
     }
   }
 }

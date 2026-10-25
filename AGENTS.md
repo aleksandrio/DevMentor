@@ -35,8 +35,8 @@ To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie
 | Hasła i sesje | bcryptjs, jose | bcrypt z kosztem 12; sesja to JWT HS256 w ciasteczku `httpOnly`. |
 | Style stron frontendowych | Tailwind CSS | Publiczna część serwisu (strony dla uczących się i mentorów). |
 | Komponenty stron backendowych | shadcn/ui (na Tailwindzie) | Panel administracyjny i inne strony zaplecza. |
-| Monorepo | npm workspaces | Pakiety w katalogu `packages/`. Node.js ≥ 22.17 (wymóg MikroORM 7, pole `engines`). Skrypty w katalogu głównym delegujące do pakietu kończą się `--`, żeby przekazywały argumenty (`npm run dev -- -p 3001`). |
-| Testy | Vitest, Playwright | Vitest dla `core` (`npm run test`), Playwright dla przeglądarki (`npm run test:e2e`). |
+| Monorepo | npm workspaces | Pakiety w katalogu `packages/`. Node.js ≥ 22.17 (wymóg MikroORM 7, pole `engines`); testy integracyjne i CI wymagają Node.js ≥ 24 (wymóg `agent-browser`). Skrypty w katalogu głównym delegujące do pakietu kończą się `--`, żeby przekazywały argumenty (`npm run dev -- -p 3001`). |
+| Testy | Vitest, Testing Library, testcontainers, agent-browser, Playwright | Testy jednostkowe: Vitest dla wszystkich pakietów (`npm run test`, pokrycie `@vitest/coverage-v8`, próg 100%), `jsdom` i Testing Library dla `ui` i `app`. Testy integracyjne: PostgreSQL z testcontainers i aplikacja sterowana przez `agent-browser` (`npm run test:integration`). E2E: Playwright (`npm run test:e2e`). Zob. „Testy”. |
 | Jakość | ESLint, `tsc`, `npm audit` | Zob. „Weryfikacja zmian w kodzie”. |
 
 Nie dodawaj alternatyw dla powyższych narzędzi (innego ORM-a, query buildera, kontenera DI, biblioteki walidacji, loggera, biblioteki komponentów czy CSS-in-JS) bez specyfikacji. Nie dodawaj zależności do czegoś, co pokrywa 20 linii własnego kodu.
@@ -75,6 +75,7 @@ app ──► ui            (ui jest samodzielny)
 - Koperta odpowiedzi API jest konwencją kształtu, a nie wspólnym typem. `core/src/http` i `ui/src/backend/api` deklarują ją osobno, bo `ui` nie importuje `core`. Wspólny pakiet na takie typy to decyzja wymagająca specyfikacji.
 - Pakiety `core`, `db` i `ui` nie mają kroku budowania: `exports` wskazuje pliki źródłowe `.ts`, a Next.js transpiluje je sam. Wspólne ustawienia TypeScriptu są w `tsconfig.base.json`.
 - Importuj pakiety po nazwie (`@devmentor/core`) i tylko przez ich publiczny punkt wejścia (`exports` w `package.json`). Nie sięgaj do `../../packages/x/src/...`.
+- Narzędzia testowe całego repozytorium (stub `server-only`, setup DOM, wspólna konfiguracja Vitest, harness testów integracyjnych) są w katalogu `test/` w katalogu głównym. To nie jest pakiet i nie trafia tam kod aplikacji.
 - Zależności npm instaluj w pakiecie, który ich używa (`npm install <pkg> -w @devmentor/<nazwa>`), a nie w katalogu głównym. W katalogu głównym trzymaj tylko narzędzia całego repozytorium (ESLint, TypeScript, skrypty).
 
 ### Konwencja pojęć domenowych
@@ -182,6 +183,7 @@ Własna implementacja zamiast `apiHandler`/`makeCrudRoute`, `CrudForm` albo `Dat
 - Bez pustych `catch`: obsłuż, zaloguj z kontekstem przez logger albo rzuć dalej. Bez magicznych liczb: nazwana stała z uzasadnieniem wartości. Wczesne `return` zamiast głębokich `if`. Zmienne logiczne w formie pozytywnej (`isConfirmed`).
 - Bez martwego i zakomentowanego kodu oraz `console.log`. Diff PR dotyczy wyłącznie jego celu.
 - Zmiana zachowania ma test, który nie przechodzi na kodzie sprzed zmiany; poprawka błędu ma test regresji. Przepływy wrażliwe na wyścigi (rezerwacja, zmiana terminu) mają test integracyjny przypadku współbieżnego.
+- **Każda nowa funkcja ma 100% pokrycia testami jednostkowymi: linii, gałęzi, funkcji i instrukcji.** Dotyczy każdego nowego i zmienionego pliku w `packages/*/src` (także komponentów, stron, tras API i komponentów shadcn/ui). Próg 100% egzekwuje `npm run test` i CI; PR, który go obniża, nie przechodzi. Pokrycia nie podbijasz komentarzami `v8 ignore`/`istanbul ignore` ani nowymi wyłączeniami w `vitest.config.ts`. Gałąź, której nie da się osiągnąć testem, usuwasz albo upraszczasz w kodzie. Nowe wyłączenie z pomiaru (tylko kod generowany) wymaga specyfikacji i zgody człowieka.
 - Lista kontrolna przeglądu (blokery): uwierzytelnienie po stronie serwera, autoryzacja konkretnego rekordu, sprawdzenie i zapis chronione transakcją albo ograniczeniem, brak sekretów w logach i odpowiedziach, brak niesparametryzowanego wejścia w zapytaniach, ścieżkach i komendach, zapis tylko z wyniku schematu zod (bez mass assignment), odmowa przy błędzie decyzji o dostępie. Poważne: flagi ciasteczek zachowane przy zmianach w auth, test regresji dla poprawek bezpieczeństwa, limit prób na endpointach logowania i rejestracji. Pełna lista: `.ai/specs/2026-09-01-engineering-standards.md`.
 
 ### Interfejs: Tailwind CSS i shadcn/ui
@@ -344,12 +346,20 @@ Przed commitem uruchom:
 ```bash
 npm run lint
 npm run typecheck
-npm run test       # Vitest (packages/core)
+npm run test               # Vitest, wszystkie pakiety, próg pokrycia 100%
 npm run build
-npm run audit      # npm audit bez zależności deweloperskich, próg high
-npm run test:e2e   # przy zmianach stron, stylów, tras, API albo konfiguracji uruchomieniowej
+npm run audit              # npm audit bez zależności deweloperskich, próg high
+npm run test:integration   # przy zmianach serwisów, encji, migracji, tras, stron albo konfiguracji (Docker)
+npm run test:e2e           # przy zmianach stron, stylów, tras, API albo konfiguracji uruchomieniowej
 ```
 
-Wszystkie komendy uruchamiasz w katalogu głównym repozytorium i sprawdzasz ich kod wyjścia (nie maskuj go potokiem do `tail`). `typecheck` sprawdza każdy pakiet workspace osobno, a `lint` pilnuje też granic między pakietami. `test:e2e` (Playwright, Chromium headless) buduje aplikację, uruchamia `next start` na porcie 3100 i testuje ją w przeglądarce. Testy są w `packages/app/e2e/`. Gdy `DATABASE_URL` jest ustawione (np. w głównym `.env` dla bazy z `docker compose up -d`), testy oczekują działającej i zmigrowanej bazy (`npm run db:migrate`) i uruchamiają też scenariusze logowania; bez niej oczekują statusu „nieskonfigurowana” i pomijają scenariusze z bazą. `AUTH_SECRET` dla testów ustawia `playwright.config.ts`, jeśli brak go w środowisku. Przeglądarkę instalujesz raz: `npx playwright install chromium`.
+Wszystkie komendy uruchamiasz w katalogu głównym repozytorium i sprawdzasz ich kod wyjścia (nie maskuj go potokiem do `tail`). `typecheck` sprawdza każdy pakiet workspace osobno oraz narzędzia w katalogu głównym (`tsconfig.json`), a `lint` pilnuje też granic między pakietami. CI (`.github/workflows/ci.yml`) uruchamia na każdym pull requeście `lint`, `typecheck`, `audit`, `test`, `build`, `test:integration` i `test:e2e` (z bazą PostgreSQL); czerwone CI blokuje scalenie.
+
+### Testy
+
+- **Jednostkowe** (`npm run test`): Vitest w trybie projektów z katalogu głównego (`vitest.config.ts` + `packages/*/vitest.config.*`). Pliki `*.test.ts`/`*.test.tsx` leżą obok testowanego kodu w `src/`. `core` i `db` działają w środowisku `node`, `ui` i `app` w `jsdom` z Testing Library (`test/dom-setup.ts`). Test jednostkowy nie łączy się z bazą ani siecią: MikroORM, `fetch`, `next/navigation`, `next/headers` i serwisy zastępujesz atrapami (`vi.mock`, `vi.fn`). Trasę API testujesz przez atrapę `apiHandler`, która zwraca funkcję obsługi, i atrapy serwisów w `cradle`. Pojedynczy plik uruchamiasz przez `npx vitest run <ścieżka>`. Pokrycie fragmentu mierzysz filtrem ścieżki (`npx vitest run packages/ui --coverage`), a nie `--project`, bo z `--project` Vitest 5 nie zbiera pokrycia (zob. `.ai/lessons.md`).
+- **Integracyjne** (`npm run test:integration`, wymaga Dockera i jednorazowo `npx agent-browser install`): `test/integration/global-setup.ts` uruchamia PostgreSQL 17 z testcontainers, wykonuje `npm run db:migrate`, buduje aplikację i startuje `next start` na wolnym porcie. Testy są w `packages/<pakiet>/integration/*.int.test.ts`: serwisy `core` na prawdziwej bazie (tu należą testy współbieżności) i przepływy w przeglądarce przez `AgentBrowser` z `test/integration/agent-browser.ts` (nakładka na CLI `agent-browser`, osobna sesja na test). Adres bazy i aplikacji dają `testDatabaseUrl()` i `testBaseUrl()` z `test/integration/context.ts`.
+- **Tymczasowa instancja do ręcznego sprawdzania** (`npm run app:ephemeral`): ta sama baza i aplikacja bez testów. Skrypt wypisuje adres aplikacji i `DATABASE_URL` i działa do `Ctrl+C`, po czym sprząta kontener. Stronę sprawdzasz przez `npx agent-browser open <adres>`, `snapshot`, `find label … fill`, `find role button click --name …`. Jeśli Chrome kończy się błędem „Socket path too long”, uruchom `agent-browser` z `TMPDIR=/tmp` (zob. `.ai/lessons.md`).
+- **E2E** (`npm run test:e2e`): Playwright, Chromium headless. Buduje aplikację, uruchamia `next start` na porcie 3100 i testuje ją w przeglądarce. Testy są w `packages/app/e2e/`. Gdy `DATABASE_URL` jest ustawione (np. w głównym `.env` dla bazy z `docker compose up -d`), testy oczekują działającej i zmigrowanej bazy (`npm run db:migrate`) i uruchamiają też scenariusze logowania; bez niej oczekują statusu „nieskonfigurowana” i pomijają scenariusze z bazą. `AUTH_SECRET` dla testów ustawia `playwright.config.ts`, jeśli brak go w środowisku. Przeglądarkę instalujesz raz: `npx playwright install chromium`.
 
 Wynik zapisz w logu przebiegu (sekcja „Weryfikacja”).
