@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RateLimitError } from "./errors";
-import { FailureRateLimiter } from "./rate-limit";
+import { clientIp, FailureRateLimiter } from "./rate-limit";
 
 describe("FailureRateLimiter", () => {
   const policy = { maxFailures: 5, windowMs: 15 * 60 * 1000 };
@@ -40,5 +40,48 @@ describe("FailureRateLimiter", () => {
     for (let attempt = 0; attempt < 5; attempt++) limiter.recordFailure("k");
     limiter.reset("k");
     expect(() => limiter.assertAllowed("k")).not.toThrow();
+  });
+});
+
+describe("FailureRateLimiter memory bound", () => {
+  const policy = { maxFailures: 1, windowMs: 1000 };
+  const MAX_TRACKED_KEYS = 10_000;
+
+  it("drops expired windows first when the table is full", () => {
+    let now = 0;
+    const limiter = new FailureRateLimiter(policy, () => now);
+    limiter.recordFailure("expired");
+    now = 500;
+    for (let index = 1; index < MAX_TRACKED_KEYS; index++) limiter.recordFailure(`key-${index}`);
+    now = 1000;
+
+    limiter.recordFailure("new");
+    expect(() => limiter.assertAllowed("new")).toThrow(RateLimitError);
+    expect(() => limiter.assertAllowed("key-1")).toThrow(RateLimitError);
+  });
+
+  it("forgets the oldest window when nothing has expired", () => {
+    const limiter = new FailureRateLimiter(policy, () => 0);
+    for (let index = 0; index < MAX_TRACKED_KEYS; index++) limiter.recordFailure(`key-${index}`);
+
+    limiter.recordFailure("new");
+    expect(() => limiter.assertAllowed("new")).toThrow(RateLimitError);
+    expect(() => limiter.assertAllowed("key-0")).not.toThrow();
+    expect(() => limiter.assertAllowed("key-1")).toThrow(RateLimitError);
+  });
+});
+
+describe("clientIp", () => {
+  function request(forwardedFor?: string) {
+    return new Request("http://localhost/", { headers: forwardedFor === undefined ? {} : { "x-forwarded-for": forwardedFor } });
+  }
+
+  it("takes the first X-Forwarded-For address", () => {
+    expect(clientIp(request(" 203.0.113.7 , 10.0.0.1"))).toBe("203.0.113.7");
+  });
+
+  it("falls back to unknown", () => {
+    expect(clientIp(request())).toBe("unknown");
+    expect(clientIp(request(" "))).toBe("unknown");
   });
 });

@@ -86,7 +86,8 @@ const eslintConfig = defineConfig([
     "**/next-env.d.ts",
     // Specs, run logs, lessons and local tool state (e.g. temp files); no code.
     ".ai/**",
-    // Playwright artifacts.
+    // Test artifacts (Playwright, Vitest coverage).
+    "**/coverage/**",
     "**/test-results/**",
     "**/playwright-report/**",
   ]),

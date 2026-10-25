@@ -28,6 +28,8 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 ## Testy
 
 - [Playwright w tym repo: kolory w `lab()` i cache w `TMPDIR`](lessons/2026-10-25-playwright-e2e-pitfalls.md): kolory w testach porównuj z obliczoną wartością tokenu CSS (Chromium zwraca `lab()`), a `.ai/**` i artefakty testów trzymaj w `globalIgnores` ESLint.
+- [Vitest 5: `--project` razem z `--coverage` nie zbiera pokrycia](lessons/2026-10-25-vitest-coverage-project-filter.md): pokrycie części repozytorium mierz filtrem ścieżki (`npx vitest run packages/<pakiet> --coverage`), bo z `--project` raport pokazuje `0/0`.
+- [agent-browser: `wait --url` dopasowuje wzorzec, Chrome potrzebuje krótkiego `TMPDIR`](lessons/2026-10-25-agent-browser-pitfalls.md): na dokładny adres czekaj przez `wait --fn` z `location.pathname + location.search`, a `agent-browser` uruchamiaj z `TMPDIR=/tmp`, gdy Chrome zgłasza „Socket path too long”.
 
 ## Monorepo i npm
 

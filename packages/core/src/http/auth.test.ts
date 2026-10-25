@@ -7,9 +7,12 @@ import {
   createSessionToken,
   readSession,
   requireRole,
+  requireSession,
   SESSION_COOKIE,
   sessionCookie,
+  verifySessionToken,
 } from "./auth";
+import { UnauthorizedError } from "./errors";
 
 function requestWithToken(token: string): Request {
   return new Request("http://localhost/", { headers: { cookie: `${SESSION_COOKIE}=${token}` } });
@@ -23,6 +26,31 @@ describe("session tokens", () => {
 
   it("returns null without a cookie, even without a secret", async () => {
     expect(await readSession(new Request("http://localhost/"), null)).toBeNull();
+    const otherCookies = new Request("http://localhost/", { headers: { cookie: "flag; theme=dark" } });
+    expect(await readSession(otherCookies, null)).toBeNull();
+  });
+
+  it("finds the session cookie among others and decodes it", async () => {
+    const token = await createSessionToken({ userId: "u1", role: "student" }, testSecret);
+    const request = new Request("http://localhost/", {
+      headers: { cookie: `flag; theme=dark; ${SESSION_COOKIE}=${encodeURIComponent(token)}` },
+    });
+    expect(await readSession(request, testSecret)).toEqual({ userId: "u1", role: "student" });
+  });
+
+  it("rejects a token without a subject", async () => {
+    const token = await new SignJWT({ role: "student" })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("1h")
+      .sign(testSecret);
+    expect(await verifySessionToken(token, testSecret)).toBeNull();
+    expect(await verifySessionToken(undefined, null)).toBeNull();
+  });
+
+  it("requireSession returns the session or throws UnauthorizedError", async () => {
+    const token = await createSessionToken({ userId: "u1", role: "mentor" }, testSecret);
+    expect(await requireSession(requestWithToken(token), testSecret)).toEqual({ userId: "u1", role: "mentor" });
+    await expect(requireSession(new Request("http://localhost/"), testSecret)).rejects.toThrow(UnauthorizedError);
   });
 
   it("rejects a token signed with another secret", async () => {
@@ -62,6 +90,7 @@ describe("authorization helpers", () => {
     expect(() => requireRole(session, "admin")).toThrow(expect.objectContaining({ status: 403 }));
     expect(() => assertOwns(session, "u2")).toThrow(expect.objectContaining({ status: 403 }));
     expect(() => assertOwns(session, "u1")).not.toThrow();
+    expect(() => requireRole(session, "student")).not.toThrow();
   });
 });
 
