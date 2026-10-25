@@ -22,8 +22,8 @@ Skille instaluje się zwykłą drogą (`npx skills add open-mercato/skills --ski
 
 ## Reguła na przyszłość
 
-Nie kopiuj skilli do `.ai/skills/`. Nakładka to `.ai/skills/<nazwa>/SKILL.md` bez frontmattera, zaczyna się od `> **Repo-local override.** …`, ma tylko sekcje `## <część bazowego skilla> (add|replace)` i ma mniej niż połowę linii bazowego `SKILL.md` (kontrakt: `om-create-skill/references/overlay-contract.md`). Pod banerem dodaj `@`-import bazy (`@../../../.claude/skills/<nazwa>/SKILL.md`) ze zdaniem, żeby najpierw wykonać bazowy skill: cezar przy wyborze `/<nazwa>` podaje agentowi samą nakładkę z `.ai/skills/` zamiast bazowego skilla.
+Nie kopiuj skilli do `.ai/skills/`. Nakładka to `.ai/skills/<nazwa>/SKILL.md` bez frontmattera, zaczyna się od `> **Repo-local override.** …`, ma tylko sekcje `## <część bazowego skilla> (add|replace)` i ma mniej niż połowę linii bazowego `SKILL.md` (kontrakt: `om-create-skill/references/overlay-contract.md`). Nie dodawaj do nakładki odwołań do ścieżek bazowego skilla: nakładka to czyste różnice, a bazowy skill sam ją czyta na starcie.
 
 ## Uzupełnienie (2026-10-25, review PR #9)
 
-Przy uruchomieniu `/om-code-review` w cezarze sesja dostała jako instrukcje skilla wyłącznie 7-liniową nakładkę ("Skill files are installed on disk at: .ai/skills/om-code-review"). Bez odwołania do bazy agent wykonałby tylko różnice, bez bramki walidacji i checklist.
+Przy uruchomieniu `/om-code-review` w cezarze sesja dostała jako instrukcje skilla wyłącznie 7-liniową nakładkę ("Skill files are installed on disk at: .ai/skills/om-code-review"). Agent, który nie przeczyta bazy sam, wykona tylko różnice, bez bramki walidacji i checklist. Człowiek odrzucił obejście przez `@`-import bazy w nakładce: `.claude/skills/` jest poza gitem, a nakładka ma zawierać tylko różnice. To znane ograniczenie cezara do poprawienia po jego stronie; do tego czasu, gdy cezar poda samą nakładkę, przeczytaj bazowy `.claude/skills/<nazwa>/SKILL.md` i zastosuj na nim różnice.
