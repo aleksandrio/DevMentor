@@ -1,9 +1,9 @@
 # Instalator lokalnego środowiska `npm run setup`
 
-- **Status:** approved
+- **Status:** implemented
 - **Data:** 2026-10-25
 - **Autor:** Claude Code (claude-opus-5-5), przebieg `om-auto-fix-issue 6` (`om-auto-write-spec --autonomous`)
-- **Powiązane:** issue #6, `README.md` („Uruchomienie lokalne”, „Dostępne skrypty”), `BACKWARD_COMPATIBILITY.md` („CLI scripts (root `package.json`)”), `.ai/specs/2026-10-25-github-ci-and-test-coverage.md` (próg pokrycia 100%)
+- **Powiązane:** issue #6, PR #7 (specyfikacja), PR #8 (implementacja), `.ai/runs/2026-10-25-local-setup-command.md`, `README.md` („Uruchomienie lokalne”, „Dostępne skrypty”), `BACKWARD_COMPATIBILITY.md` („CLI scripts (root `package.json`)”), `.ai/specs/2026-10-25-github-ci-and-test-coverage.md` (próg pokrycia 100%)
 
 ## Problem i cel
 
@@ -72,12 +72,12 @@ Compose nazywa projekt od katalogu, więc w worktree (`.wt/*`) albo w klonie o i
 - Nowy plik: zawartość `.env.example` z podmienioną linią `AUTH_SECRET=` na `AUTH_SECRET=<sekret>`.
 - Istniejący plik z pustym `AUTH_SECRET=`: podmiana tylko tej linii; brak linii `AUTH_SECRET` → dopisanie jej na końcu (z poprzedzającym znakiem nowej linii, jeśli trzeba).
 - Linia jest rozpoznawana wyrażeniem `^(export\s+)?AUTH_SECRET=(.*?)\r?$` (tryb wieloliniowy). Przy kilku takich liniach liczy się ostatnia (tak czyta `.env` Node i dotenv) i tylko ona jest podmieniana. Wartość uznajemy za pustą po `trim()` i usunięciu otaczających cudzysłowów. Zachowujemy prefiks `export ` i zakończenie `\r\n`.
-- Zapis jest atomowy: najpierw usunięcie pozostałego `.env.setup-tmp`, potem zapis do niego z trybem `0o600`, dla istniejącego `.env` `chmod` na tryb tego pliku, na końcu `rename` na `.env`. W `finally` plik tymczasowy jest usuwany, jeśli został. Przerwanie skryptu nie zostawia częściowo zapisanego `.env` ani pliku z sekretem o szerszych uprawnieniach.
+- Zapis jest atomowy: najpierw usunięcie pozostałego `.env.setup-tmp` (`rmSync` z `force`), potem zapis do niego z trybem `0o600`, dla istniejącego `.env` `chmod` na tryb tego pliku, na końcu `rename` na `.env`. W `finally` plik tymczasowy jest usuwany, jeśli został. Przerwanie skryptu nie zostawia częściowo zapisanego `.env` ani pliku z sekretem o szerszych uprawnieniach.
 - Komunikat mówi tylko „wygenerowano AUTH_SECRET”, bez wartości.
 
 ### Struktura kodu
 
-- `scripts/setup/steps.mjs`: eksportuje `runSetup(deps)` → kod wyjścia (`0`/`1`) oraz funkcje pomocnicze (`parseMinNodeVersion`, `isVersionAtLeast`, `upsertAuthSecret`, `isPostgresHealthy`). Wszystkie efekty uboczne idą przez `deps`: `exec(command, args) → { status, stdout, stderr }`, `fs` (`existsSync`, `readFileSync`, `writeFileSync`, `renameSync`, `statSync`, `chmodSync`, `unlinkSync`), `randomBytes`, `log`, `error`, `nodeVersion`, `cwd`.
+- `scripts/setup/steps.mjs`: eksportuje `runSetup(deps)` → kod wyjścia (`0`/`1`) oraz funkcje pomocnicze (`parseMinNodeVersion`, `isVersionAtLeast`, `upsertAuthSecret`, `isPostgresHealthy`). Wszystkie efekty uboczne idą przez `deps`: `exec(command, args) → { status, stdout, stderr }`, `fs` (`existsSync`, `readFileSync`, `writeFileSync`, `renameSync`, `statSync`, `chmodSync`, `rmSync`), `randomBytes`, `log`, `error`, `nodeVersion`, `cwd`.
 - `scripts/setup/deps.mjs`: `createDeps()` składa prawdziwe zależności z `node:child_process` (`spawnSync`, `stdio` dziedziczone dla `npm install` i `docker compose up`, przechwytywane dla sprawdzeń), `node:fs`, `node:crypto`.
 - `scripts/setup.mjs`: punkt wejścia, dwie linie: `process.exitCode = runSetup(createDeps())`.
 - Typy przez JSDoc (`@typedef SetupDeps`), sprawdzane przez `tsc`: root `tsconfig.json` obejmuje `scripts/**/*.mjs`, a każdy plik zaczyna się od `// @ts-check` (`checkJs` nie da się włączyć dla wybranych plików w `tsconfig`, a globalne objęłoby też `test/**/*.mjs`).
@@ -122,3 +122,4 @@ Brak — rozstrzygnięte domyślnie, zob. niżej.
 
 - 2026-10-25: po przeglądzie (świeży kontekst) dodano `name: devmentor` w `docker-compose.yml` (konflikt portu 5432 w worktree), parser obu formatów `docker compose ps`, bezpieczny tryb pliku przy zapisie `.env`, regułę ESLint dla importów w `scripts/`, `// @ts-check` zamiast `checkJs` per plik i doprecyzowano kryterium 2.
 - 2026-10-25: człowiek zatwierdził specyfikację i potwierdził Q2 (brak Dockera → kod 1); status `approved`.
+- 2026-10-25: wdrożono w PR #8. Plik tymczasowy usuwa `rmSync(..., { force: true })` zamiast `unlinkSync` (bez osobnego sprawdzania istnienia). README: „Szybki start: `npm run setup`” i „Ręcznie, krok po kroku”. Status `implemented`.
