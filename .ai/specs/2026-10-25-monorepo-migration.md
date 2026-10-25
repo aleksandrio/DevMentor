@@ -123,3 +123,5 @@ Wspólne dla każdej fazy:
 - 2026-10-25 (faza 5): skrypty `dev`, `build`, `start` w głównym `package.json` kończą się `--`, bo inaczej `npm run start -- -p <port>` nie działało. Zob. `.ai/lessons/2026-10-25-npm-workspace-script-args.md`.
 - 2026-10-25 (faza 5): `"engines": { "node": ">=22.17" }` w głównym `package.json` i wymóg w README, bo MikroORM 7 wymaga Node.js ≥ 22.17.
 - 2026-10-25 (faza 5): repozytorium nie ma testów automatycznych ani skryptu `test` (`npm test` → „Missing script”). Weryfikacja migracji opiera się na lint, typecheck, build i sprawdzeniach uruchomieniowych. Testy są poza zakresem tej specyfikacji.
+- 2026-10-25 (po fazie 5): dwa punkty niesprawdzone w fazach 3–5 zostały sprawdzone, gdy środowisko dało dostęp do Dockera i Chromium. (1) `docker compose up -d` z obrazem `postgres:17` (17.11), `npm run db:migrate` i `db:migration:pending` według README. (2) Testy e2e w Playwright (`.ai/specs/2026-10-25-e2e-playwright.md`): strona główna i `/admin` w przeglądarce, z bazą i bez niej. Przy okazji przycisk-link na `/admin` (z fazy 2) zamieniono na `Link` + `buttonVariants`, bo Base UI nadawał mu rolę `button`.
+

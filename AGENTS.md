@@ -106,6 +106,7 @@ app ──► ui ──► core (tylko typy i czyste funkcje pomocnicze)
 - Komponenty shadcn/ui generujesz CLI shadcn do `packages/ui` i stamtąd je importujesz. Nie kopiuj ich do `packages/app`.
   - Dodawanie: `npx shadcn@latest add <komponent> -c packages/ui` (w katalogu głównym). Konfiguracja jest w `packages/ui/components.json` (styl `base-nova`, czyli komponenty na Base UI, `@base-ui/react`).
   - Nie uruchamiaj `shadcn init` na `packages/ui`: CLI nie rozpoznaje tam frameworka, a konfiguracja jest już gotowa.
+  - Link wyglądający jak przycisk to `<Link className={buttonVariants()}>`, a nie `Button` z `render={<Link />}`. Base UI nadaje wtedy elementowi `<a>` rolę `button`, przez co czytniki ekranu i testy widzą przycisk zamiast linku.
   - Importujesz po ścieżce komponentu: `import { Button } from "@devmentor/ui/components/button"`. `@devmentor/ui` nie ma zbiorczego punktu wejścia; publiczne ścieżki to `components/*`, `lib/*`, `hooks/*` i `globals.css` (pole `exports`).
 - Jeden zestaw tokenów (kolory, typografia, odstępy, promienie) w `packages/ui/src/styles/globals.css` obsługuje obie części serwisu. Tryb ciemny wynika z `prefers-color-scheme` (domyślny wariant `dark:` Tailwinda). Nie dodawaj klasy `.dark` ani `@custom-variant dark` bez specyfikacji.
 - W App Routerze rozdzielaj części serwisu grupami tras, np. `app/(frontend)/...` i `app/(backend)/admin/...`, każda z własnym layoutem.
@@ -260,8 +261,9 @@ Przed commitem uruchom:
 npm run lint
 npm run typecheck
 npm run build
+npm run test:e2e   # przy zmianach stron, stylów, tras albo konfiguracji uruchomieniowej
 ```
 
-Wszystkie komendy uruchamiasz w katalogu głównym repozytorium. `typecheck` sprawdza każdy pakiet workspace osobno, a `lint` pilnuje też granic między pakietami.
+Wszystkie komendy uruchamiasz w katalogu głównym repozytorium. `typecheck` sprawdza każdy pakiet workspace osobno, a `lint` pilnuje też granic między pakietami. `test:e2e` (Playwright, Chromium headless) buduje aplikację, uruchamia `next start` na porcie 3100 i testuje ją w przeglądarce. Testy są w `packages/app/e2e/`. Gdy `DATABASE_URL` jest ustawione (np. w głównym `.env` dla bazy z `docker compose up -d`), testy oczekują działającej bazy, a bez niej statusu „nieskonfigurowana”. Przeglądarkę instalujesz raz: `npx playwright install chromium`.
 
 Wynik zapisz w logu przebiegu (sekcja „Weryfikacja”).

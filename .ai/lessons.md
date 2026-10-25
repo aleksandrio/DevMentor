@@ -10,6 +10,7 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 ## Tailwind
 
 - [Tailwind w monorepo skanuje klasy tylko od katalogu roboczego aplikacji](lessons/2026-10-25-tailwind-source-scan-monorepo.md): każdy pakiet z klasami Tailwinda (np. `packages/ui`) musi być objęty dyrektywą `@source` w arkuszu importowanym przez aplikację, bo `@tailwindcss/turbopack` skanuje tylko od `process.cwd()` (`packages/app`).
+- [Base UI `Button` z `render={<Link />}` ma rolę `button`](lessons/2026-10-25-base-ui-button-link-role.md): nawigację wyglądającą jak przycisk rób przez `<Link className={buttonVariants()}>`, a `Button` z Base UI zostaw dla akcji.
 - [shadcn CLI w pakiecie `ui`: `init` nie działa, `add` działa](lessons/2026-10-25-shadcn-cli-in-ui-package.md): komponenty dodawaj przez `npx shadcn@latest add <komponent> -c packages/ui`; nie uruchamiaj `shadcn init` na `packages/ui`, bo nie rozpozna frameworka, a `add` bez bazy dociąga tylko `cn`.
 
 ## Next.js
@@ -23,9 +24,17 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 - [MikroORM 7: brak encji blokuje start, CLI nie czyta `.env` i potrzebuje loadera TS](lessons/2026-10-25-mikro-orm-7-setup-pitfalls.md): przy pustej liście encji wymagane jest `discovery.warnWhenNoEntities: false`; CLI ładuje `.ts` przez `tsx` (`"mikro-orm".tsLoader` w `packages/db/package.json`), a `.env` wczytuje sama konfiguracja przez `process.loadEnvFile()`; `init` łączy się leniwie, więc błędy połączenia obsługuj przy zapytaniu.
 - [Weryfikacja na PostgreSQL bez Dockera](lessons/2026-10-25-postgres-without-docker.md): gdy gniazdo Dockera jest niedostępne, uruchom `embedded-postgres` w `/tmp` (poza zależnościami projektu) i zanotuj to w logu przebiegu.
 
+## Testy
+
+- [Playwright w tym repo: kolory w `lab()` i cache w `TMPDIR`](lessons/2026-10-25-playwright-e2e-pitfalls.md): kolory w testach porównuj z obliczoną wartością tokenu CSS (Chromium zwraca `lab()`), a `.ai/**` i artefakty testów trzymaj w `globalIgnores` ESLint.
+
 ## Monorepo i npm
 
 - [Skrypt delegujący do workspace musi kończyć się `--`](lessons/2026-10-25-npm-workspace-script-args.md): skrypty `npm run <x> -w <pakiet>` w głównym `package.json` kończ `--`, inaczej argumenty (np. `-p 3001`) przejmuje wewnętrzny npm.
+
+## Środowisko agenta
+
+- [Zabijanie procesów po wzorcu zabija też powłokę](lessons/2026-10-25-kill-by-pattern-kills-shell.md): procesy zatrzymuj po nazwie (`ps -eo pid,comm`, np. `next-server`) albo po PID, nie przez `pkill -f`/`grep` po linii poleceń w tym samym wywołaniu.
 
 ## Proces
 

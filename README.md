@@ -116,6 +116,15 @@ npm run db:migrate       # wykonuje oczekujące migracje MikroORM
 
 Nową migrację po zmianie encji tworzysz poleceniem `npm run db:migration:create -- --name <nazwa>`.
 
+### Testy end-to-end (Playwright)
+
+```bash
+npx playwright install chromium   # jednorazowo: przeglądarka dla Playwrighta
+npm run test:e2e                  # build, next start na porcie 3100, testy w Chromium
+```
+
+Testy są w `packages/app/e2e/`. Jeśli w `.env` jest `DATABASE_URL`, testy oczekują działającej bazy (uruchom wcześniej `docker compose up -d` i `npm run db:migrate`).
+
 ### Dostępne skrypty
 
 | Skrypt          | Opis                                       |
@@ -125,6 +134,7 @@ Nową migrację po zmianie encji tworzysz poleceniem `npm run db:migration:creat
 | `npm run start` | Uruchamia zbudowaną wersję produkcyjną     |
 | `npm run lint`  | Sprawdza kod i granice pakietów za pomocą ESLint |
 | `npm run typecheck` | Sprawdza typy w każdym pakiecie workspace |
+| `npm run test:e2e` | Buduje aplikację i uruchamia testy end-to-end w Playwright (Chromium) |
 | `npm run db:migrate` | Wykonuje oczekujące migracje bazy danych |
 | `npm run db:migration:create` | Tworzy migrację na podstawie zmian w encjach |
 | `npm run db:migration:list` | Pokazuje wykonane migracje |

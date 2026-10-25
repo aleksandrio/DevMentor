@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Button } from "@devmentor/ui/components/button";
+import { buttonVariants } from "@devmentor/ui/components/button";
 import {
   Card,
   CardContent,
@@ -31,9 +31,11 @@ export default function AdminPage() {
         </Suspense>
       </CardContent>
       <CardFooter>
-        <Button nativeButton={false} render={<Link href="/" />}>
+        {/* Navigation stays a real link (role "link"); Base UI's Button would
+            expose an <a> rendered through it as role "button". */}
+        <Link href="/" className={buttonVariants()}>
           Przejdź do strony głównej
-        </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
