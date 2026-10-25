@@ -28,4 +28,8 @@ Wynik `SKILL_COVERAGE_MISSING` w zadaniu cezara to fałszywy alarm. Kolekcja poc
 
 W zadaniu cezara nie uznawaj braku katalogu `om-*` w `.claude/skills/` za brak skilla i nie proponuj instalacji. Skille dostarcza cezar z katalogu `open-mercato/skills`, a ich źródłem jest `open-mercato/skills`.
 
-Wyjątek: gdy łańcuch musi **wywołać** skill, którego nie ma ani w `.claude/skills/`, ani w `.ai/skills/`, nie zatrzymuj się na tym. Skopiuj brakujące skille z `open-mercato/skills` (`git clone --depth 1`, katalog `skills/om-*`) do `.ai/skills/`, dopisz `.ai/skills/` do `.git/info/exclude` i sprawdź pokrycie (`SKILL_COVERAGE_OK`).
+Wyjątek: gdy łańcuch musi **wywołać** skill, którego nie ma w `.claude/skills/`, nie zatrzymuj się na tym. Zainstaluj kolekcję przez `npx skills add open-mercato/skills --skill '*' -a claude-code -y` (trafia do `.claude/skills/`, który jest w `.gitignore`) i sprawdź pokrycie (`SKILL_COVERAGE_OK`). Nie kopiuj skilli do `.ai/skills/`: ten katalog zawiera tylko nakładki (zob. `2026-10-25-ai-skills-overlays-only.md`).
+
+## Korekta (2026-10-25, PR #9)
+
+Człowiek cofnął instalację pełnych kopii skilli w `.ai/skills/` z uzupełnienia wyżej: `.ai/skills/` służy wyłącznie do nakładek (różnic względem zainstalowanego skilla). Wyjątek w regule zmieniono z kopiowania do `.ai/skills/` na `npx skills add` do `.claude/skills/`.
