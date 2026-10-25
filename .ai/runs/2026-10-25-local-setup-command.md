@@ -68,6 +68,6 @@ Do uzupełnienia.
 
 ### Phase 4: Dokumentacja i weryfikacja
 
-- [ ] 4.1 `README.md` i `BACKWARD_COMPATIBILITY.md`
-- [ ] 4.2 Weryfikacja ręczna w świeżym klonie (dwa uruchomienia, brak Dockera)
+- [x] 4.1 `README.md` i `BACKWARD_COMPATIBILITY.md` — 434d0af
+- [x] 4.2 Weryfikacja ręczna w świeżym klonie (dwa uruchomienia, brak Dockera) — 434d0af
 - [ ] 4.3 Specyfikacja do `implemented/`, domknięcie logu
