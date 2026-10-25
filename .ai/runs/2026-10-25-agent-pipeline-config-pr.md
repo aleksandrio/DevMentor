@@ -34,8 +34,8 @@ Faza 1 przenosi gotowe commity przez `cherry-pick`, bez przepisywania treści. F
 
 ### Phase 1: Konfiguracja potoku
 
-- [ ] 1.1 Konfiguracja, deskryptory i dokumenty procesu
-- [ ] 1.2 Wniosek o skillach dostarczanych przez cezar
+- [x] 1.1 Konfiguracja, deskryptory i dokumenty procesu — 0b324d9
+- [x] 1.2 Wniosek o skillach dostarczanych przez cezar — 7ced77b
 
 ### Phase 2: Weryfikacja
 
