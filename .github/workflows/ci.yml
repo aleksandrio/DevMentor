@@ -83,3 +83,43 @@ jobs:
       - run: npx agent-browser install --with-deps
       # Docker is preinstalled on ubuntu-latest; testcontainers starts PostgreSQL.
       - run: npm run test:integration
+
+  e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: devmentor
+          POSTGRES_PASSWORD: devmentor
+          POSTGRES_DB: devmentor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devmentor -d devmentor"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # With DATABASE_URL the suite also runs the registration, login and admin scenarios.
+      DATABASE_URL: postgres://devmentor:devmentor@localhost:5432/devmentor
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run db:migrate
+      - run: npm run test:e2e
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: packages/app/test-results/
+          if-no-files-found: ignore

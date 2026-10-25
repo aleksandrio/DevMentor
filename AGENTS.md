@@ -353,7 +353,7 @@ npm run test:integration   # przy zmianach serwisów, encji, migracji, tras, str
 npm run test:e2e           # przy zmianach stron, stylów, tras, API albo konfiguracji uruchomieniowej
 ```
 
-Wszystkie komendy uruchamiasz w katalogu głównym repozytorium i sprawdzasz ich kod wyjścia (nie maskuj go potokiem do `tail`). `typecheck` sprawdza każdy pakiet workspace osobno oraz narzędzia w katalogu głównym (`tsconfig.json`), a `lint` pilnuje też granic między pakietami. CI (`.github/workflows/ci.yml`) uruchamia na każdym pull requeście `lint`, `typecheck`, `audit`, `test`, `build` i `test:integration`; czerwone CI blokuje scalenie.
+Wszystkie komendy uruchamiasz w katalogu głównym repozytorium i sprawdzasz ich kod wyjścia (nie maskuj go potokiem do `tail`). `typecheck` sprawdza każdy pakiet workspace osobno oraz narzędzia w katalogu głównym (`tsconfig.json`), a `lint` pilnuje też granic między pakietami. CI (`.github/workflows/ci.yml`) uruchamia na każdym pull requeście `lint`, `typecheck`, `audit`, `test`, `build`, `test:integration` i `test:e2e` (z bazą PostgreSQL); czerwone CI blokuje scalenie.
 
 ### Testy
 

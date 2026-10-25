@@ -134,7 +134,7 @@ npm run test:integration          # PostgreSQL z testcontainers (Docker), build,
 npm run app:ephemeral             # tymczasowa baza i aplikacja do ręcznego sprawdzania, do Ctrl+C
 ```
 
-Testy integracyjne i `agent-browser` wymagają Node.js ≥ 24 i działającego Dockera. CI na GitHub Actions (`.github/workflows/ci.yml`) uruchamia na każdym pull requeście lint, typecheck, audit, testy jednostkowe, build i testy integracyjne.
+Testy integracyjne i `agent-browser` wymagają Node.js ≥ 24 i działającego Dockera. CI na GitHub Actions (`.github/workflows/ci.yml`) uruchamia na każdym pull requeście lint, typecheck, audit, testy jednostkowe, build, testy integracyjne i testy e2e (Playwright z bazą).
 
 ### Dostępne skrypty
 

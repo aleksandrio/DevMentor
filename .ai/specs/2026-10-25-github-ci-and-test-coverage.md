@@ -24,13 +24,13 @@ W zakresie:
 - `.github/workflows/ci.yml` (wyzwalacze `pull_request` i `push` na `main`).
 - Vitest uruchamiany z katalogu głównego w trybie projektów (`packages/*/vitest.config.ts`), `@vitest/coverage-v8`, progi 100% dla linii, gałęzi, funkcji i instrukcji.
 - Środowisko `jsdom` z Testing Library (`@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`) dla pakietów `ui` i `app`.
+- Zadanie CI `e2e`: Playwright (`npm run test:e2e`) z PostgreSQL jako kontenerem usługi GitHub Actions (decyzja człowieka, zob. „Decyzje i zmiany”).
 - Testy integracyjne: `vitest.integration.config.ts`, harness w `test/integration/`, testy w `packages/core/integration/` i `packages/app/integration/`.
 - Skrypt `npm run app:ephemeral`: tymczasowa baza z testcontainers i uruchomiona aplikacja do ręcznego albo agentowego sprawdzania przez `agent-browser`.
 - Aktualizacja AGENTS.md (stos, zasada pokrycia, weryfikacja) i CLAUDE.md (skrót).
 
 Poza zakresem:
 
-- Uruchamianie Playwrighta (`npm run test:e2e`) w CI. Testy e2e zostają lokalną bramką (zob. „Otwarte pytania”).
 - Deploy, publikacja raportów pokrycia w usługach zewnętrznych, ochrona gałęzi w ustawieniach GitHuba (to konfiguracja repozytorium, nie kod).
 - Zmiany zachowania istniejącego kodu. Testy mogą ujawnić błąd: wtedy poprawka idzie z testem regresji i wpisem w „Decyzje i zmiany”.
 
@@ -40,7 +40,7 @@ Poza zakresem:
 2. Pomiar pokrycia obejmuje `packages/*/src/**/*.{ts,tsx}`. Wyłączone są tylko: pliki testów, migracje MikroORM (generowane przez CLI; wykonują je testy integracyjne) i pliki zawierające wyłącznie typy (v8 nie raportuje dla nich kodu). Każde wyłączenie ma komentarz z uzasadnieniem w `vitest.config.ts`.
 3. `npm run test:integration` uruchamia PostgreSQL w kontenerze (testcontainers), wykonuje `npm run db:migrate`, buduje aplikację, startuje `next start` na wolnym porcie i wykonuje testy integracyjne: serwisów `core` na prawdziwej bazie (w tym współbieżną rejestrację tego samego e-maila) oraz przepływów w przeglądarce przez `agent-browser`. Po zakończeniu kontener i serwer są zatrzymane.
 4. `npm run app:ephemeral` robi to samo bez testów, wypisuje adres aplikacji i `DATABASE_URL`, działa do `Ctrl+C` i sprząta po sobie.
-5. Workflow CI ma osobne zadania `lint` (lint, typecheck, audit), `unit` (testy z pokryciem), `build` (build bez bazy) i `integration`. Każde zadanie kończy się błędem przy błędzie kroku.
+5. Workflow CI ma osobne zadania `lint` (lint, typecheck, audit), `unit` (testy z pokryciem), `build` (build bez bazy), `integration` i `e2e` (Playwright z bazą). Każde zadanie kończy się błędem przy błędzie kroku.
 6. AGENTS.md zawiera jednoznaczną zasadę 100% pokrycia nowych funkcji testami jednostkowymi oraz opis obu warstw testów.
 7. `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test`, `npm run test:integration` i `npm run test:e2e` przechodzą lokalnie.
 
@@ -71,7 +71,7 @@ Poza zakresem:
 ### CI
 
 - `.github/workflows/ci.yml`, `ubuntu-latest`, Node.js 24, `npm ci` z cache npm, `concurrency` anulujące poprzedni przebieg tego samego PR.
-- Zadania: `lint` (`npm run lint`, `npm run typecheck`, `npm run audit`), `unit` (`npm run test`, raport pokrycia jako artefakt), `build` (`npm run build` bez `DATABASE_URL`), `integration` (`npx agent-browser install --with-deps`, `npm run test:integration`; Docker jest dostępny na `ubuntu-latest`).
+- Zadania: `lint` (`npm run lint`, `npm run typecheck`, `npm run audit`), `unit` (`npm run test`, raport pokrycia jako artefakt), `build` (`npm run build` bez `DATABASE_URL`), `integration` (`npx agent-browser install --with-deps`, `npm run test:integration`; Docker jest dostępny na `ubuntu-latest`), `e2e` (kontener usługi `postgres:17`, `npm run db:migrate`, `npx playwright install --with-deps chromium`, `npm run test:e2e` z `DATABASE_URL`, więc obejmuje też scenariusze z bazą; ślady Playwrighta jako artefakt przy błędzie).
 
 ## Plan wdrożenia i testów
 
@@ -85,7 +85,7 @@ Poza zakresem:
 
 ## Otwarte pytania
 
-- Czy `npm run test:e2e` (Playwright) ma też działać w CI? Zostawiam poza zakresem, bo nie było w poleceniu, a testy integracyjne pokrywają te same przepływy przez `agent-browser`. Do decyzji człowieka.
+Brak.
 
 ## Decyzje i zmiany
 
@@ -98,3 +98,4 @@ Poza zakresem:
 - 2026-10-25: `packages/ui/tsconfig.json` i `packages/app/tsconfig.json` obejmują `test/dom-setup.ts`, żeby typy dopasowań jest-dom były widoczne w typechecku.
 - 2026-10-25: testy tras API i `packages/app/src/server/*` działają w środowisku `node` (komentarz `// @vitest-environment node`), bo w `jsdom` `jose` nie przyjmuje klucza `Uint8Array` z innego realmu.
 - 2026-10-25: kryteria 1–4, 6 i 7 spełnione lokalnie. Kryterium 5 (przebieg na GitHub Actions) czeka na pierwszy PR. Status pozostaje `in-progress` do scalenia do `main`.
+- 2026-10-25: człowiek rozstrzygnął otwarte pytanie: `npm run test:e2e` działa w CI jako zadanie `e2e`. Baza to kontener usługi GitHub Actions (`postgres:17`), a nie testcontainers, bo Playwright startuje serwer sam (`webServer`) i potrzebuje tylko `DATABASE_URL`. Sprawdzone lokalnie z równoważnym kontenerem: 16/16. Człowiek zlecił też wypchnięcie gałęzi i otwarcie PR.
