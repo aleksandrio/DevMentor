@@ -55,16 +55,16 @@ Do uzupełnienia.
 
 ### Phase 1: Konfiguracja narzędzi dla `scripts/`
 
-- [ ] 1.1 Projekt Vitest `scripts`, `coverage.include`, `tsconfig.json`, reguła ESLint importów, `name: devmentor` w Compose
+- [x] 1.1 Projekt Vitest `scripts`, `coverage.include`, `tsconfig.json`, reguła ESLint importów, `name: devmentor` w Compose — 38abe89
 
 ### Phase 2: Logika kroków
 
-- [ ] 2.1 Sprawdzenia wstępne Node.js i Docker
-- [ ] 2.2 Kroki npm install, `.env`, PostgreSQL, migracje z wykrywaniem „pominięto”
+- [x] 2.1 Sprawdzenia wstępne Node.js i Docker — e3e52a1
+- [x] 2.2 Kroki npm install, `.env`, PostgreSQL, migracje z wykrywaniem „pominięto” — e3e52a1
 
 ### Phase 3: Punkt wejścia i skrypt npm
 
-- [ ] 3.1 `deps.mjs`, `setup.mjs`, skrypt `setup` w `package.json`
+- [x] 3.1 `deps.mjs`, `setup.mjs`, skrypt `setup` w `package.json` — bcd1c24
 
 ### Phase 4: Dokumentacja i weryfikacja
 
