@@ -1,7 +1,7 @@
 # Tailwind w monorepo skanuje klasy tylko od katalogu roboczego aplikacji
 
 - **Data:** 2026-10-25
-- **Źródło:** run `.ai/runs/2026-10-25-monorepo-phase-1.md`, spec `.ai/specs/2026-10-25-monorepo-migration.md`
+- **Źródło:** run `.ai/runs/2026-10-25-monorepo-phase-1.md`, spec `.ai/specs/implemented/2026-10-25-monorepo-migration.md`
 - **Tagi:** tailwind, turbopack, monorepo, nextjs
 
 ## Kontekst

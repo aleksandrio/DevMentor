@@ -1,6 +1,6 @@
 # Migracja do monorepo (npm workspaces, pakiety app/core/db/ui)
 
-- **Status:** in-progress
+- **Status:** implemented
 - **Data:** 2026-10-25
 - **Autor:** Claude Code (claude-opus-5-5), na polecenie Aleksandra Kowala
 - **Powiązane:** `AGENTS.md` (sekcja „Architektura i stos technologiczny”), `README.md` (sekcja „Architektura”), `.ai/runs/2026-10-25-monorepo-phase-1.md`
@@ -79,13 +79,13 @@ Wspólne dla każdej fazy:
   - `/admin`: status bazy w osobnym asynchronicznym komponencie w `<Suspense>`. Statyczna powłoka strony zostaje prerenderowana, a status jest liczony przy każdym żądaniu.
   - ORM w MikroORM 7 łączy się leniwie (`init` nie otwiera połączenia), więc niedostępna baza objawia się jako `down`, a nie jako błąd strony.
 
-### Faza 5: domknięcie — **kod i dokumentacja ukończone 2026-10-25** (run: `.ai/runs/2026-10-25-monorepo-phase-5.md`); przeniesienie do `implemented/` czeka na scalenie do `main`
+### Faza 5: domknięcie — **kod i dokumentacja ukończone 2026-10-25** (run: `.ai/runs/2026-10-25-monorepo-phase-5.md`); przeniesienie do `implemented/` po scaleniu PR #1
 
 - Usunięcie z `AGENTS.md` i `README.md` adnotacji o „docelowej” strukturze, aktualizacja sekcji „Uruchomienie lokalne”.
 - Przeniesienie tej specyfikacji do `implemented/` — dopiero po scaleniu `feat/monorepo-migration` do `main` (AGENTS.md: „Wdrożona, kod na gałęzi głównej”). Scalenie wymaga decyzji człowieka.
 - Weryfikacja całości z czystego klona: `npm ci`, `lint`, `typecheck`, `build`, testy, `start`/`dev`, migracje.
 
-**Wszystkie fazy zrealizowane na gałęzi `feat/monorepo-migration`. Pozostało: scalenie do `main` i `git mv` tej specyfikacji do `implemented/` ze statusem `implemented`.**
+**Wszystkie fazy zrealizowane i scalone do `main` (PR #1, d95408d).**
 
 ## Otwarte pytania
 
@@ -123,5 +123,5 @@ Wspólne dla każdej fazy:
 - 2026-10-25 (faza 5): skrypty `dev`, `build`, `start` w głównym `package.json` kończą się `--`, bo inaczej `npm run start -- -p <port>` nie działało. Zob. `.ai/lessons/2026-10-25-npm-workspace-script-args.md`.
 - 2026-10-25 (faza 5): `"engines": { "node": ">=22.17" }` w głównym `package.json` i wymóg w README, bo MikroORM 7 wymaga Node.js ≥ 22.17.
 - 2026-10-25 (faza 5): repozytorium nie ma testów automatycznych ani skryptu `test` (`npm test` → „Missing script”). Weryfikacja migracji opiera się na lint, typecheck, build i sprawdzeniach uruchomieniowych. Testy są poza zakresem tej specyfikacji.
-- 2026-10-25 (po fazie 5): dwa punkty niesprawdzone w fazach 3–5 zostały sprawdzone, gdy środowisko dało dostęp do Dockera i Chromium. (1) `docker compose up -d` z obrazem `postgres:17` (17.11), `npm run db:migrate` i `db:migration:pending` według README. (2) Testy e2e w Playwright (`.ai/specs/2026-10-25-e2e-playwright.md`): strona główna i `/admin` w przeglądarce, z bazą i bez niej. Przy okazji przycisk-link na `/admin` (z fazy 2) zamieniono na `Link` + `buttonVariants`, bo Base UI nadawał mu rolę `button`.
-
+- 2026-10-25 (po fazie 5): dwa punkty niesprawdzone w fazach 3–5 zostały sprawdzone, gdy środowisko dało dostęp do Dockera i Chromium. (1) `docker compose up -d` z obrazem `postgres:17` (17.11), `npm run db:migrate` i `db:migration:pending` według README. (2) Testy e2e w Playwright (`.ai/specs/implemented/2026-10-25-e2e-playwright.md`): strona główna i `/admin` w przeglądarce, z bazą i bez niej. Przy okazji przycisk-link na `/admin` (z fazy 2) zamieniono na `Link` + `buttonVariants`, bo Base UI nadawał mu rolę `button`.
+- 2026-10-25: Wszystkie fazy (1–5) scalone do `main` w PR #1 (d95408d). Specyfikacja przeniesiona do `implemented/` ze statusem `implemented`.

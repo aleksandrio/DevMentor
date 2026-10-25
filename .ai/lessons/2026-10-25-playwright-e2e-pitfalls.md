@@ -1,7 +1,7 @@
 # Playwright w tym repo: kolory w `lab()` i cache transformacji w `TMPDIR` w repozytorium
 
 - **Data:** 2026-10-25
-- **Źródło:** run `.ai/runs/2026-10-25-e2e-playwright-docker.md`, spec `.ai/specs/2026-10-25-e2e-playwright.md`
+- **Źródło:** run `.ai/runs/2026-10-25-e2e-playwright-docker.md`, spec `.ai/specs/implemented/2026-10-25-e2e-playwright.md`
 - **Tagi:** playwright, tailwind, eslint, testy
 
 ## Kontekst
