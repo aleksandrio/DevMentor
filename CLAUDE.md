@@ -15,6 +15,7 @@ Pełne zasady są w zaimportowanym wyżej `AGENTS.md`, który ma pierwszeństwo 
 | `.ai/lessons.md` | indeks wniosków, jedna linia na wniosek |
 | `.ai/lessons/YYYY-MM-DD-slug.md` | pełny opis jednego wniosku |
 | `.ai/agentic.config.json`, `.ai/trackers/`, `.ai/browsers/` | konfiguracja potoku skilli `om-*` (proces: `SDLC.md`, przegląd: `CODE_REVIEW.md`, kontrakty: `BACKWARD_COMPATIBILITY.md`) |
+| `.ai/skills/<nazwa>/SKILL.md` | nakładki na skille `om-*`: tylko różnice, bez frontmattera; same skille instaluje `npx skills add` do `.claude/skills/` (w .gitignore) |
 | `.ai/cezar/` | lokalny stan narzędzia cezar (w .gitignore, nie edytuj) |
 
 Nazwy plików: `YYYY-MM-DD-slug.md`, gdzie data to dzień utworzenia, a slug jest po angielsku, w kebab-case.

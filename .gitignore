@@ -54,3 +54,4 @@ next-env.d.ts
 
 # skille agentów instalowane przez `npx skills add` (wersje w skills-lock.json); nadpisania są w .ai/skills/
 /.claude/skills/
+/.agents/skills/
