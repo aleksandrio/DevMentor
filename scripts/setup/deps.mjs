@@ -15,6 +15,8 @@ export function createDeps() {
         encoding: "utf8",
         stdio: options.inherit ? "inherit" : "pipe",
         // npm is `npm.cmd` on Windows, which spawnSync finds only through a shell.
+        // Every command and argument is a constant from steps.mjs, so nothing
+        // user-supplied reaches the shell.
         shell: process.platform === "win32",
       });
       return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };

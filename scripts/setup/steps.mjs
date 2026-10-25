@@ -2,14 +2,17 @@
 // Steps of `npm run setup` (.ai/specs/implemented/2026-10-25-local-setup-command.md).
 // Runs before `npm install`, so it imports only Node.js built-ins; every side
 // effect goes through the injected `deps`, which keeps the steps unit-testable.
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+// Namespace import: `util.parseEnv` (Node.js >= 20.12) is resolved only when
+// called, so an older Node.js still reaches the friendly version check.
+import * as util from "node:util";
 
 /**
  * @typedef {{ status: number | null, stdout: string, stderr: string }} ExecResult
  * @typedef {object} SetupDeps
  * @property {(command: string, args: string[], options?: { inherit?: boolean }) => ExecResult} exec
  *   Runs a command in the repository root; `inherit` streams its output to the terminal.
- * @property {Pick<typeof import("node:fs"), "existsSync" | "readFileSync" | "writeFileSync" | "renameSync" | "statSync" | "chmodSync" | "rmSync">} fs
+ * @property {Pick<typeof import("node:fs"), "existsSync" | "readFileSync" | "writeFileSync" | "renameSync" | "statSync" | "chmodSync" | "rmSync" | "realpathSync">} fs
  * @property {(size: number) => Buffer} randomBytes
  * @property {(message: string) => void} log
  * @property {(message: string) => void} error
@@ -57,22 +60,20 @@ export function isVersionAtLeast(version, minimum) {
   return true;
 }
 
-/** @param {string} value */
-function isBlankValue(value) {
-  return value.trim().replace(/^(["'])(.*)\1$/, "$2").trim() === "";
-}
-
 /**
  * Fills an empty or missing `AUTH_SECRET` in `.env` content and leaves every
- * other line untouched. With several `AUTH_SECRET` lines the last one wins (as
- * in `process.loadEnvFile`), so only that one is checked and replaced.
+ * other line untouched. "Empty" is decided by Node's own `.env` parser (the one
+ * behind `process.loadEnvFile`), so spacing, quotes and `#` comments mean the
+ * same here as in the app. With several `AUTH_SECRET` lines the last one wins,
+ * so only that one is replaced.
  * @param {string} content
  * @param {() => string} generateSecret
  * @returns {{ content: string, isChanged: boolean }}
  */
 export function upsertAuthSecret(content, generateSecret) {
-  const last = [...content.matchAll(/^(export\s+)?AUTH_SECRET=(.*?)(\r?)$/gm)].at(-1);
-  if (last && !isBlankValue(last[2])) return { content, isChanged: false };
+  if (util.parseEnv(content).AUTH_SECRET) return { content, isChanged: false };
+
+  const last = [...content.matchAll(/^[ \t]*(export[ \t]+)?AUTH_SECRET[ \t]*=.*?(\r?)$/gm)].at(-1);
 
   const secret = generateSecret();
   if (!last) {
@@ -80,7 +81,7 @@ export function upsertAuthSecret(content, generateSecret) {
     const separator = content === "" || content.endsWith("\n") ? "" : eol;
     return { content: `${content}${separator}AUTH_SECRET=${secret}${eol}`, isChanged: true };
   }
-  const line = `${last[1] ?? ""}AUTH_SECRET=${secret}${last[3]}`;
+  const line = `${last[1] ?? ""}AUTH_SECRET=${secret}${last[2]}`;
   const start = /** @type {number} */ (last.index);
   return { content: content.slice(0, start) + line + content.slice(start + last[0].length), isChanged: true };
 }
@@ -151,7 +152,8 @@ function checkDocker(deps) {
 function installDependencies(deps) {
   const installedLock = join(deps.root, "node_modules", ".package-lock.json");
   const lockfile = join(deps.root, "package-lock.json");
-  if (deps.fs.existsSync(installedLock) && deps.fs.statSync(installedLock).mtimeMs >= deps.fs.statSync(lockfile).mtimeMs) {
+  const isInstalled = deps.fs.existsSync(installedLock) && deps.fs.existsSync(lockfile);
+  if (isInstalled && deps.fs.statSync(installedLock).mtimeMs >= deps.fs.statSync(lockfile).mtimeMs) {
     return `${SKIPPED} (node_modules aktualne względem package-lock.json)`;
   }
   runOrThrow(deps, "npm", ["install"]);
@@ -159,15 +161,16 @@ function installDependencies(deps) {
 }
 
 /**
- * Writes through a temporary file and `rename`, so an interrupted run never
- * leaves a half-written `.env`; the temporary file is removed on failure.
+ * Writes through a temporary file next to the target and `rename`, so an
+ * interrupted run never leaves a half-written `.env`; the temporary file is
+ * removed on failure.
  * @param {SetupDeps} deps
  * @param {string} target
  * @param {string} content
  * @param {number} mode
  */
 function writeFileAtomically(deps, target, content, mode) {
-  const temp = join(deps.root, ENV_TEMP_FILE);
+  const temp = join(dirname(target), ENV_TEMP_FILE);
   deps.fs.rmSync(temp, { force: true });
   try {
     deps.fs.writeFileSync(temp, content, { mode: SECRET_FILE_MODE });
@@ -187,8 +190,11 @@ function ensureEnvFile(deps) {
   const { content, isChanged } = upsertAuthSecret(source, generateSecret);
   if (hasEnv && !isChanged) return `${SKIPPED} (.env istnieje i ma AUTH_SECRET)`;
 
-  const mode = hasEnv ? deps.fs.statSync(envPath).mode & PERMISSION_BITS : SECRET_FILE_MODE;
-  writeFileAtomically(deps, envPath, content, mode);
+  // A symlinked `.env` (e.g. shared between worktrees) is updated at its
+  // target; renaming over the link would replace it with a regular file.
+  const target = hasEnv ? deps.fs.realpathSync(envPath) : envPath;
+  const mode = hasEnv ? deps.fs.statSync(target).mode & PERMISSION_BITS : SECRET_FILE_MODE;
+  writeFileAtomically(deps, target, content, mode);
   if (!hasEnv) return `utworzono .env z ${ENV_EXAMPLE_FILE}${isChanged ? " i wygenerowano AUTH_SECRET" : ""}`;
   return "wygenerowano AUTH_SECRET w istniejącym .env";
 }

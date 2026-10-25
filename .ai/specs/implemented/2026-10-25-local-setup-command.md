@@ -65,19 +65,19 @@ Wynik `docker compose ps --format json` ma dwa kształty: tablica JSON (Compose 
 
 Compose nazywa projekt od katalogu, więc w worktree (`.wt/*`) albo w klonie o innej nazwie `ps` nie widzi kontenera z głównego katalogu, a `up` próbuje uruchomić drugi `postgres` na zajętym porcie 5432 i kończy się błędem. `docker-compose.yml` dostaje `name: devmentor`. Główny katalog `DevMentor` już dziś daje projekt `devmentor` (Compose zamienia nazwę na małe litery), więc istniejący kontener i wolumen `devmentor_postgres-data` zostają te same; worktree i klony dzielą jedną bazę, tak jak dzielą port.
 
-`npm install` (krok 3) jest pomijany po znaczniku czasu ukrytego lockfile'a npm, a nie uruchamiany zawsze, bo pełne `npm install` w tym monorepo trwa kilkanaście sekund nawet bez zmian, a kryterium 2 wymaga „pominięto”. Zmiana `package-lock.json` (np. po `git pull`) odświeża jego mtime, więc instalacja wykona się ponownie. Znane ograniczenie: zmiana `package.json` pakietu bez zmiany lockfile'a nie wymusza instalacji (wtedy `npm install` ręcznie).
+`npm install` (krok 3) jest pomijany po znaczniku czasu ukrytego lockfile'a npm, a nie uruchamiany zawsze, bo pełne `npm install` w tym monorepo trwa kilkanaście sekund nawet bez zmian, a kryterium 2 wymaga „pominięto”. Zmiana `package-lock.json` (np. po `git pull`) odświeża jego mtime, więc instalacja wykona się ponownie. Znane ograniczenia: zmiana `package.json` pakietu bez zmiany lockfile'a nie wymusza instalacji, a `npm install` przerwany w skrypcie `postinstall` zostawia już zapisany ukryty lockfile, więc kolejne uruchomienie go pominie (w obu przypadkach `npm install` ręcznie).
 
 ### Zapis `.env`
 
 - Nowy plik: zawartość `.env.example` z podmienioną linią `AUTH_SECRET=` na `AUTH_SECRET=<sekret>`.
 - Istniejący plik z pustym `AUTH_SECRET=`: podmiana tylko tej linii; brak linii `AUTH_SECRET` → dopisanie jej na końcu (z poprzedzającym znakiem nowej linii, jeśli trzeba).
-- Linia jest rozpoznawana wyrażeniem `^(export\s+)?AUTH_SECRET=(.*?)\r?$` (tryb wieloliniowy). Przy kilku takich liniach liczy się ostatnia (tak czyta `.env` Node i dotenv) i tylko ona jest podmieniana. Wartość uznajemy za pustą po `trim()` i usunięciu otaczających cudzysłowów. Zachowujemy prefiks `export ` i zakończenie `\r\n`.
+- O tym, czy `AUTH_SECRET` jest pusty, rozstrzyga `util.parseEnv` z Node.js (te same zasady co `process.loadEnvFile`). Linię do podmiany rozpoznaje wyrażenie `^[ \t]*(export[ \t]+)?AUTH_SECRET[ \t]*=.*?(\r?)$` (tryb wieloliniowy). Przy kilku takich liniach liczy się ostatnia (tak czyta `.env` Node i dotenv) i tylko ona jest podmieniana. Zachowujemy prefiks `export ` i zakończenie `\r\n`.
 - Zapis jest atomowy: najpierw usunięcie pozostałego `.env.setup-tmp` (`rmSync` z `force`), potem zapis do niego z trybem `0o600`, dla istniejącego `.env` `chmod` na tryb tego pliku, na końcu `rename` na `.env`. W `finally` plik tymczasowy jest usuwany, jeśli został. Przerwanie skryptu nie zostawia częściowo zapisanego `.env` ani pliku z sekretem o szerszych uprawnieniach.
 - Komunikat mówi tylko „wygenerowano AUTH_SECRET”, bez wartości.
 
 ### Struktura kodu
 
-- `scripts/setup/steps.mjs`: eksportuje `runSetup(deps)` → kod wyjścia (`0`/`1`) oraz funkcje pomocnicze (`parseMinNodeVersion`, `isVersionAtLeast`, `upsertAuthSecret`, `isPostgresHealthy`). Wszystkie efekty uboczne idą przez `deps`: `exec(command, args) → { status, stdout, stderr }`, `fs` (`existsSync`, `readFileSync`, `writeFileSync`, `renameSync`, `statSync`, `chmodSync`, `rmSync`), `randomBytes`, `log`, `error`, `nodeVersion`, `cwd`.
+- `scripts/setup/steps.mjs`: eksportuje `runSetup(deps)` → kod wyjścia (`0`/`1`) oraz funkcje pomocnicze (`parseMinNodeVersion`, `isVersionAtLeast`, `upsertAuthSecret`, `isPostgresHealthy`). Wszystkie efekty uboczne idą przez `deps`: `exec(command, args) → { status, stdout, stderr }`, `fs` (`existsSync`, `readFileSync`, `writeFileSync`, `renameSync`, `statSync`, `chmodSync`, `rmSync`, `realpathSync`), `randomBytes`, `log`, `error`, `nodeVersion`, `root`.
 - `scripts/setup/deps.mjs`: `createDeps()` składa prawdziwe zależności z `node:child_process` (`spawnSync`, `stdio` dziedziczone dla `npm install` i `docker compose up`, przechwytywane dla sprawdzeń), `node:fs`, `node:crypto`.
 - `scripts/setup.mjs`: punkt wejścia, dwie linie: `process.exitCode = runSetup(createDeps())`.
 - Typy przez JSDoc (`@typedef SetupDeps`), sprawdzane przez `tsc`: root `tsconfig.json` obejmuje `scripts/**/*.mjs`, a każdy plik zaczyna się od `// @ts-check` (`checkJs` nie da się włączyć dla wybranych plików w `tsconfig`, a globalne objęłoby też `test/**/*.mjs`).
@@ -86,7 +86,7 @@ Compose nazywa projekt od katalogu, więc w worktree (`.wt/*`) albo w klonie o i
 
 - `vitest.config.ts`: `projects` dostaje obok `"packages/*"` wpis inline `{ test: { name: "scripts", environment: "node", include: ["scripts/**/*.test.mjs"] } }`, a `coverage.include` dodaje `scripts/**/*.mjs`. Lista wyłączeń się nie zmienia: pliki `*.test.mjs` Vitest 5 wyklucza z pomiaru sam (domyślny wzorzec `test.include`).
 - `steps.test.mjs`: każdy krok w wariancie „pominięto”, „wykonano” i „błąd”, kolejność (sprawdzenia wstępne przed zapisem), brak sekretu w `log`/`error`, atomowy zapis `.env` (pozostały plik tymczasowy, tryb pliku, sprzątanie po błędzie), wszystkie gałęzie `upsertAuthSecret` (CRLF, `export`, kilka linii, cudzysłowy, brak linii), parser `ps` (tablica, NDJSON, pusty wynik, śmieci).
-- `deps.test.mjs`: atrapy `node:child_process`/`node:fs`/`node:crypto` (`vi.mock`), sprawdzenie mapowania wyniku `spawnSync`.
+- `deps.test.mjs`: atrapa `node:child_process` (`vi.mock`) i sprawdzenie mapowania wyniku `spawnSync`; `fs`, `randomBytes` i katalog główny sprawdzane jako prawdziwe moduły Node.
 - `setup.test.mjs`: atrapa `./setup/steps.mjs` i `./setup/deps.mjs`, import punktu wejścia i sprawdzenie `process.exitCode`; `afterEach` zeruje `process.exitCode`, a `vi.resetModules()` izoluje importy, żeby wartość 1 nie wyciekła do kodu wyjścia Vitest.
 
 ## Plan wdrożenia i testów
@@ -123,3 +123,4 @@ Brak — rozstrzygnięte domyślnie, zob. niżej.
 - 2026-10-25: po przeglądzie (świeży kontekst) dodano `name: devmentor` w `docker-compose.yml` (konflikt portu 5432 w worktree), parser obu formatów `docker compose ps`, bezpieczny tryb pliku przy zapisie `.env`, regułę ESLint dla importów w `scripts/`, `// @ts-check` zamiast `checkJs` per plik i doprecyzowano kryterium 2.
 - 2026-10-25: człowiek zatwierdził specyfikację i potwierdził Q2 (brak Dockera → kod 1); status `approved`.
 - 2026-10-25: wdrożono w PR #8. Plik tymczasowy usuwa `rmSync(..., { force: true })` zamiast `unlinkSync` (bez osobnego sprawdzania istnienia). README: „Szybki start: `npm run setup`” i „Ręcznie, krok po kroku”. Status `implemented`.
+- 2026-10-25: po przeglądzie kodu PR #8: o pustym `AUTH_SECRET` rozstrzyga `util.parseEnv` z Node.js (te same zasady spacji, cudzysłowów i komentarzy `#` co `process.loadEnvFile`), linia jest rozpoznawana z wiodącymi spacjami i spacjami wokół `=`; dowiązanie symboliczne `.env` jest aktualizowane w miejscu docelowym (`realpathSync`, plik tymczasowy obok celu); brak `package-lock.json` oznacza instalację; README opisuje przejście ze starej nazwy projektu Compose.

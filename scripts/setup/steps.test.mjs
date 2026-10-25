@@ -19,7 +19,7 @@ const EXAMPLE = "DATABASE_URL=postgres://x\nAUTH_SECRET=\n";
  * In-memory repository with a scripted `exec`. Commands answer from `responses`
  * (keyed by the joined command line); unknown commands succeed with no output.
  */
-function createFakeDeps({ files = {}, mtimes = {}, modes = {}, responses = {}, nodeVersion = "24.1.0", failWrite = false } = {}) {
+function createFakeDeps({ files = {}, mtimes = {}, modes = {}, links = {}, responses = {}, nodeVersion = "24.1.0", failWrite = false } = {}) {
   const store = new Map(Object.entries({
     [`${ROOT}/package.json`]: JSON.stringify({ engines: { node: ">=22.17" } }),
     [`${ROOT}/.env.example`]: EXAMPLE,
@@ -53,6 +53,7 @@ function createFakeDeps({ files = {}, mtimes = {}, modes = {}, responses = {}, n
       calls.push(`rm ${path}`);
       store.delete(path);
     },
+    realpathSync: (path) => links[path] ?? path,
     statSync: (path) => ({ mtimeMs: mtimes[path] ?? 0, mode: 0o100000 | (fileModes.get(path) ?? 0o644) }),
   };
   const deps = {
@@ -147,6 +148,16 @@ describe("upsertAuthSecret", () => {
     expect(upsertAuthSecret("A=1\n", generate).content).toBe("A=1\nAUTH_SECRET=NEW\n");
     expect(upsertAuthSecret("A=1", generate).content).toBe("A=1\nAUTH_SECRET=NEW\n");
     expect(upsertAuthSecret("A=1\r\nB=2", generate).content).toBe("A=1\r\nB=2\r\nAUTH_SECRET=NEW\r\n");
+  });
+
+  it("reads spacing and comments like Node's .env parser", () => {
+    expect(upsertAuthSecret("AUTH_SECRET = x\n", generate).isChanged).toBe(false);
+    expect(upsertAuthSecret("  AUTH_SECRET=y\n", generate).isChanged).toBe(false);
+    expect(upsertAuthSecret("AUTH_SECRET=a#b\n", generate).isChanged).toBe(false);
+    expect(upsertAuthSecret('AUTH_SECRET="#q"\n', generate).isChanged).toBe(false);
+    expect(upsertAuthSecret("AUTH_SECRET= # todo\n", generate).content).toBe("AUTH_SECRET=NEW\n");
+    expect(upsertAuthSecret("  AUTH_SECRET = \n", generate).content).toBe("AUTH_SECRET=NEW\n");
+    expect(upsertAuthSecret("export\tAUTH_SECRET=\n", generate).content).toBe("export\tAUTH_SECRET=NEW\n");
   });
 
   it("ignores lines that only contain the name", () => {
@@ -261,6 +272,26 @@ describe("runSetup", () => {
     ]);
     expect(logs[3]).toBe("✔ Plik .env: wygenerowano AUTH_SECRET w istniejącym .env");
     expect(logs.join("\n")).not.toContain(SECRET);
+  });
+
+  it("updates the target of a symlinked .env instead of replacing the link", () => {
+    const env = `${ROOT}/.env`;
+    const shared = "/shared/devmentor.env";
+    const { deps, store, calls } = createFakeDeps({ ...READY, files: { ...READY.files, [env]: "AUTH_SECRET=\n" }, links: { [env]: shared }, modes: { [shared]: 0o600 } });
+    store.set(shared, "AUTH_SECRET=\n");
+
+    expect(runSetup(deps)).toBe(0);
+
+    expect(store.get(shared)).toBe(`AUTH_SECRET=${SECRET}\n`);
+    expect(calls).toContain(`rename /shared/.env.setup-tmp ${shared}`);
+  });
+
+  it("installs when package-lock.json is missing", () => {
+    const { deps, store, calls } = createFakeDeps(READY);
+    store.delete(`${ROOT}/package-lock.json`);
+
+    expect(runSetup(deps)).toBe(0);
+    expect(execCalls(calls)).toContain("exec npm install (inherit)");
   });
 
   it("copies an example that already has a secret without generating one", () => {

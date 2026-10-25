@@ -98,7 +98,7 @@ npm run setup
 
 Komenda instaluje zależności, tworzy `.env` z `.env.example` z wygenerowanym `AUTH_SECRET`, uruchamia PostgreSQL (`docker compose up -d --wait`) i wykonuje migracje. Uruchomiona ponownie pomija kroki, które są już zrobione („pominięto”). Nie nadpisuje istniejącego `.env` ani niepustego `AUTH_SECRET` i nie wypisuje sekretu. Gdy Node.js jest za stary albo Docker nie działa, kończy się błędem, zanim cokolwiek zapisze. Po niej uruchom `npm run dev`.
 
-Wszystkie worktree i klony korzystają z jednej bazy, bo `docker-compose.yml` ma stałą nazwę projektu (`devmentor`).
+Wszystkie worktree i klony korzystają z jednej bazy, bo `docker-compose.yml` ma stałą nazwę projektu (`devmentor`). Jeśli wcześniej uruchamiałeś bazę z katalogu o innej nazwie niż `DevMentor`, zatrzymaj stary kontener poleceniem `docker compose -p <nazwa-starego-katalogu> down` (port 5432 będzie wolny, a dane zostaną w wolumenie `<nazwa-starego-katalogu>_postgres-data`).
 
 ### Ręcznie, krok po kroku
 
