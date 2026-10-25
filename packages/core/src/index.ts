@@ -7,6 +7,8 @@ export type { Cradle } from "./container/cradle";
 export { withScope } from "./container/scope";
 export * from "./http";
 export * from "./events";
+export { AuthService, type AuthResult } from "./services/auth/auth.service";
+export { BCRYPT_COST, UserService, type UserDto } from "./services/auth/user.service";
 export type { DatabaseHealthProbe } from "./services/health/database-health-probe.port";
 export {
   SystemHealthService,

@@ -18,6 +18,7 @@
     "db:migration:create": "npm run db:migration:create -w @devmentor/db --",
     "db:migration:list": "npm run db:migration:list -w @devmentor/db --",
     "db:migration:pending": "npm run db:migration:pending -w @devmentor/db --",
+    "db:user:promote": "npm run db:user:promote -w @devmentor/db --",
     "test:e2e": "npm run test:e2e -w @devmentor/app --",
     "test": "npm run test --workspaces --if-present",
     "audit": "npm audit --omit=dev --audit-level=high"

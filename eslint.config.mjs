@@ -46,6 +46,7 @@ const eslintConfig = defineConfig([
   {
     // Shared Zod schemas are imported by client components too.
     files: ["packages/core/src/validators/**"],
+    ignores: ["**/*.test.ts"],
     rules: restrict({
       regex: "^(?!zod$|\\.{1,2}/)",
       message: "Validators are client-safe: import only zod and other validators.",

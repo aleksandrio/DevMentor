@@ -55,9 +55,16 @@ function isUserRole(value: unknown): value is UserRole {
   return USER_ROLES.includes(value as UserRole);
 }
 
-/** The verified session, or `null` for a missing, expired, tampered or malformed token. */
+/** The verified session from the request cookie (see verifySessionToken). */
 export async function readSession(request: Request, secret: Uint8Array | null): Promise<Session | null> {
-  const token = readCookie(request, SESSION_COOKIE);
+  return verifySessionToken(readCookie(request, SESSION_COOKIE), secret);
+}
+
+/** The verified session, or `null` for a missing, expired, tampered or malformed token. */
+export async function verifySessionToken(
+  token: string | null | undefined,
+  secret: Uint8Array | null,
+): Promise<Session | null> {
   if (!token) {
     return null;
   }

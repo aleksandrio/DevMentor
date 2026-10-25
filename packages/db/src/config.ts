@@ -11,9 +11,6 @@ export function createOrmOptions({ databaseUrl }: DbConfig): Options {
   return defineConfig({
     clientUrl: databaseUrl,
     entities,
-    // No entities exist until the first domain feature lands; without this
-    // MikroORM refuses to start. Remove once `entities` is non-empty.
-    discovery: { warnWhenNoEntities: false },
     pool: { min: 0, max: 10, idleTimeoutMillis: 30_000 },
   });
 }

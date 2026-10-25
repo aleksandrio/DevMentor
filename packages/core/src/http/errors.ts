@@ -50,3 +50,10 @@ export class RateLimitError extends AppError {
     super("rate_limited", "Zbyt wiele prób. Spróbuj ponownie później.", 429);
   }
 }
+
+/** A feature needs infrastructure that is not configured (e.g. no DATABASE_URL). */
+export class ServiceUnavailableError extends AppError {
+  constructor(message = "Usługa jest chwilowo niedostępna.") {
+    super("service_unavailable", message, 503);
+  }
+}

@@ -4,6 +4,8 @@ import type { EventBus } from "../events/event-bus";
 import type { FailureRateLimiter } from "../http/rate-limit";
 import type { Logger } from "../logger";
 import type { DatabaseHealthProbe } from "../services/health/database-health-probe.port";
+import type { AuthService } from "../services/auth/auth.service";
+import type { UserService } from "../services/auth/user.service";
 import type { SystemHealthService } from "../services/health/system-health.service";
 
 /** Every dependency the container provides; one explicit entry per registration. */
@@ -20,4 +22,7 @@ export interface Cradle {
   em: EntityManager;
   databaseHealthProbe: DatabaseHealthProbe | null;
   systemHealthService: SystemHealthService;
+  /** Throws ServiceUnavailableError on resolution when no database is configured. */
+  userService: UserService;
+  authService: AuthService;
 }

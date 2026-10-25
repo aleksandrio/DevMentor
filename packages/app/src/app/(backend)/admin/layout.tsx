@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LogoutButton } from "./_components/logout-button";
 
 // Back-office pages are built from shadcn/ui components in @devmentor/ui.
 
@@ -15,12 +16,21 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           <Link href="/admin" className="font-heading text-sm font-semibold">
             DevMentor · Admin
           </Link>
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Strona główna
-          </Link>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/admin/users"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Użytkownicy
+            </Link>
+            <Link
+              href="/"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Strona główna
+            </Link>
+            <LogoutButton />
+          </nav>
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">

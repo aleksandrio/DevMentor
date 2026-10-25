@@ -1,5 +1,6 @@
 import {
   asClass,
+  asFunction,
   asValue,
   createContainer,
   InjectionMode,
@@ -10,7 +11,10 @@ import { readAppConfig } from "../config/env";
 import { EventBus } from "../events/event-bus";
 import { registerEventSubscribers } from "../events/subscribers";
 import { AUTH_RATE_LIMIT, FailureRateLimiter } from "../http/rate-limit";
+import { ServiceUnavailableError } from "../http/errors";
 import { createLogger } from "../logger";
+import { AuthService } from "../services/auth/auth.service";
+import { UserService } from "../services/auth/user.service";
 import { MikroOrmDatabaseHealthProbe } from "../services/health/adapters/mikro-orm-database-health-probe";
 import { SystemHealthService } from "../services/health/system-health.service";
 import type { Cradle } from "./cradle";
@@ -42,8 +46,16 @@ async function buildContainer(): Promise<AwilixContainer<Cradle>> {
       ? asClass(MikroOrmDatabaseHealthProbe).scoped()
       : asValue(null),
     systemHealthService: asClass(SystemHealthService).scoped(),
+    userService: orm
+      ? asClass(UserService).scoped()
+      : asFunction(databaseNotConfigured).scoped(),
+    authService: asClass(AuthService).scoped(),
   });
   return container;
+}
+
+function databaseNotConfigured(): never {
+  throw new ServiceUnavailableError("Baza danych nie jest skonfigurowana (brak DATABASE_URL).");
 }
 
 let containerPromise: Promise<AwilixContainer<Cradle>> | undefined;
