@@ -29,6 +29,6 @@ Nazwy plików: `YYYY-MM-DD-slug.md`, gdzie data to dzień utworzenia, a slug jes
 
 ## Architektura
 
-Monorepo (npm workspaces) z pakietami `packages/app`, `core`, `db` i `ui`. Stos: Next.js, React, TypeScript, PostgreSQL z MikroORM, Awilix (DI), Tailwind CSS dla stron frontendowych i shadcn/ui dla stron backendowych. Granice pakietów, kierunek zależności i zasady dla każdej biblioteki opisuje sekcja „Architektura i stos technologiczny” w `AGENTS.md`. Odejście od tych założeń wymaga specyfikacji i zgody człowieka.
+Monorepo (npm workspaces) z pakietami `packages/app`, `core`, `db` i `ui`. Kierunek zależności: `app → core → db`, `app → ui`. Stos: Next.js, React, TypeScript, PostgreSQL z MikroORM, Awilix (DI, kontener w `core`), zod, pino, Tailwind CSS dla stron frontendowych i shadcn/ui dla stron backendowych. Granice pakietów, kierunek zależności i zasady dla każdej biblioteki opisuje sekcja „Architektura i stos technologiczny” w `AGENTS.md`. Odejście od tych założeń wymaga specyfikacji i zgody człowieka.
 
 Wnioski projektu zapisuj w `.ai/lessons/`, a nie w prywatnej pamięci Claude Code. Dzięki temu korzystają z nich wszyscy agenci.
