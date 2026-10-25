@@ -8,6 +8,7 @@
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
+    "./backend/api/*": "./src/backend/api/*.ts",
     "./backend/*": "./src/backend/*.tsx"
   },
   "scripts": {

@@ -1,5 +1,5 @@
 import type { DatabaseStatus as DatabaseStatusData } from "@devmentor/core";
-import { Badge } from "@devmentor/ui/components/badge";
+import { Badge } from "@devmentor/ui/components/ui/badge";
 import { withRequestScope } from "@/server/request-scope";
 
 export async function DatabaseStatus() {

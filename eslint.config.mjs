@@ -54,14 +54,14 @@ const eslintConfig = defineConfig([
   {
     files: ["packages/db/**"],
     rules: restrict({
-      group: ["next", "next/*", "react", "react/*", "react-dom", "react-dom/*", "awilix", "@devmentor/*"],
+      group: ["next", "next/*", "react", "react/*", "react-dom", "react-dom/*", "awilix", "@devmentor/app", "@devmentor/app/*", "@devmentor/core", "@devmentor/core/*", "@devmentor/ui", "@devmentor/ui/*"],
       message: "@devmentor/db is server-side data access only and depends on no other workspace package.",
     }),
   },
   {
     files: ["packages/ui/**"],
     rules: restrict({
-      group: ["@mikro-orm/*", "awilix", "server-only", "@devmentor/*"],
+      group: ["@mikro-orm/*", "awilix", "server-only", "@devmentor/app", "@devmentor/app/*", "@devmentor/core", "@devmentor/core/*", "@devmentor/db", "@devmentor/db/*"],
       message: "@devmentor/ui is standalone: components receive data through props; no data access, DI or workspace imports.",
     }),
   },

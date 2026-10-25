@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { buttonVariants } from "@devmentor/ui/components/button";
+import { buttonVariants } from "@devmentor/ui/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@devmentor/ui/components/card";
+} from "@devmentor/ui/components/ui/card";
 import {
   DatabaseStatus,
   DatabaseStatusBadge,
