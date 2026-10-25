@@ -10,6 +10,7 @@
     "node": ">=22.17"
   },
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "npm run dev -w @devmentor/app --",
     "build": "npm run build -w @devmentor/app --",
     "start": "npm run start -w @devmentor/app --",
