@@ -88,7 +88,19 @@ Szczegółowe zasady dla agentów AI i osób rozwijających projekt opisuje [`AG
 
 ## Uruchomienie lokalne
 
-Wymagany jest Node.js w wersji 22.17 lub nowszej (wymóg MikroORM 7) oraz npm.
+Wymagany jest Node.js w wersji 22.17 lub nowszej (wymóg MikroORM 7), npm oraz Docker z Compose (lokalna baza PostgreSQL).
+
+### Szybki start: `npm run setup`
+
+```bash
+npm run setup
+```
+
+Komenda instaluje zależności, tworzy `.env` z `.env.example` z wygenerowanym `AUTH_SECRET`, uruchamia PostgreSQL (`docker compose up -d --wait`) i wykonuje migracje. Uruchomiona ponownie pomija kroki, które są już zrobione („pominięto”). Nie nadpisuje istniejącego `.env` ani niepustego `AUTH_SECRET` i nie wypisuje sekretu. Gdy Node.js jest za stary albo Docker nie działa, kończy się błędem, zanim cokolwiek zapisze. Po niej uruchom `npm run dev`.
+
+Wszystkie worktree i klony korzystają z jednej bazy, bo `docker-compose.yml` ma stałą nazwę projektu (`devmentor`).
+
+### Ręcznie, krok po kroku
 
 Zainstaluj zależności:
 
@@ -140,6 +152,7 @@ Testy integracyjne i `agent-browser` wymagają Node.js ≥ 24 i działającego D
 
 | Skrypt          | Opis                                       |
 | --------------- | ------------------------------------------ |
+| `npm run setup` | Przygotowuje lokalne środowisko: zależności, `.env`, PostgreSQL, migracje (pomija wykonane kroki) |
 | `npm run dev`   | Uruchamia serwer deweloperski              |
 | `npm run build` | Buduje wersję produkcyjną aplikacji        |
 | `npm run start` | Uruchamia zbudowaną wersję produkcyjną     |
