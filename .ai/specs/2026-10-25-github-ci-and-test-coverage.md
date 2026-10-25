@@ -3,7 +3,7 @@
 - **Status:** in-progress
 - **Data:** 2026-10-25
 - **Autor:** Claude Code (claude-opus-5-5), na polecenie Aleksandra Kowala
-- **Powiązane:** `.ai/specs/2026-10-25-engineering-standards-adoption.md` (Vitest, bramka weryfikacji), `.ai/specs/implemented/2026-10-25-e2e-playwright.md`, `.ai/runs/2026-10-25-github-ci-and-coverage.md`
+- **Powiązane:** PR #4, `.ai/specs/2026-10-25-engineering-standards-adoption.md` (Vitest, bramka weryfikacji), `.ai/specs/implemented/2026-10-25-e2e-playwright.md`, `.ai/runs/2026-10-25-github-ci-and-coverage.md`
 
 ## Problem i cel
 
@@ -99,3 +99,4 @@ Brak.
 - 2026-10-25: testy tras API i `packages/app/src/server/*` działają w środowisku `node` (komentarz `// @vitest-environment node`), bo w `jsdom` `jose` nie przyjmuje klucza `Uint8Array` z innego realmu.
 - 2026-10-25: kryteria 1–4, 6 i 7 spełnione lokalnie. Kryterium 5 (przebieg na GitHub Actions) czeka na pierwszy PR. Status pozostaje `in-progress` do scalenia do `main`.
 - 2026-10-25: człowiek rozstrzygnął otwarte pytanie: `npm run test:e2e` działa w CI jako zadanie `e2e`. Baza to kontener usługi GitHub Actions (`postgres:17`), a nie testcontainers, bo Playwright startuje serwer sam (`webServer`) i potrzebuje tylko `DATABASE_URL`. Sprawdzone lokalnie z równoważnym kontenerem: 16/16. Człowiek zlecił też wypchnięcie gałęzi i otwarcie PR.
+- 2026-10-25: kryterium 5 spełnione: pierwszy przebieg CI na PR #4 (run 40181230258) ma zielone wszystkie 5 zadań. Status zostaje `in-progress` do scalenia z `main`.
