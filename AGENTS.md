@@ -18,7 +18,7 @@ O projekcie przeczytasz w `README.md`. Stos opisuje sekcja „Architektura i sto
 
 To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie. Odejście od nich (inna biblioteka, nowy pakiet, zmiana kierunku zależności) to decyzja architektoniczna: wymaga specyfikacji w `.ai/specs/` i zgody człowieka.
 
-> Architektura opisana niżej jest wdrożona (`.ai/specs/2026-10-25-monorepo-migration.md`). Wzorcem dla nowych funkcji jest przepływ statusu bazy na `/admin`: `core/src/health/` → `db/src/health/` → `app/src/server/container.ts` → `app/src/app/(backend)/admin/_components/database-status.tsx`.
+> Architektura opisana niżej jest wdrożona (`.ai/specs/implemented/2026-10-25-monorepo-migration.md`). Wzorcem dla nowych funkcji jest przepływ statusu bazy na `/admin`: `core/src/health/` → `db/src/health/` → `app/src/server/container.ts` → `app/src/app/(backend)/admin/_components/database-status.tsx`.
 
 ### Stos
 

@@ -1,9 +1,9 @@
 # Testy end-to-end w Playwright
 
-- **Status:** in-progress
+- **Status:** implemented
 - **Data:** 2026-10-25
 - **Autor:** Claude Code (claude-opus-5-5), na polecenie Aleksandra Kowala
-- **Powiązane:** `.ai/specs/2026-10-25-monorepo-migration.md` (weryfikacja faz 2–5), `.ai/runs/2026-10-25-e2e-playwright-docker.md`
+- **Powiązane:** `.ai/specs/implemented/2026-10-25-monorepo-migration.md` (weryfikacja faz 2–5), `.ai/runs/2026-10-25-e2e-playwright-docker.md`
 
 ## Problem i cel
 
@@ -54,4 +54,4 @@ Brak.
 - 2026-10-25: kolor przycisku jest porównywany z obliczoną wartością tokenu `--primary`, a nie z literałem `rgb()`, bo Chromium zwraca kolory Tailwind 4 w `lab()`.
 - 2026-10-25: ESLint ignoruje `.ai/**` i artefakty Playwrighta. Cache transformacji Playwrighta trafia do `TMPDIR`, który w środowisku agenta wskazuje na `.ai/cezar/tmp`. Zob. `.ai/lessons/2026-10-25-playwright-e2e-pitfalls.md`.
 - 2026-10-25: kryteria akceptacji spełnione (5/5 testów bez bazy i z bazą z `docker compose`). Status pozostaje `in-progress` do scalenia gałęzi do `main`, tak jak w specyfikacji migracji.
-
+- 2026-10-25: Testy scalone do `main` w PR #1 (d95408d). Specyfikacja przeniesiona do `implemented/` ze statusem `implemented`.

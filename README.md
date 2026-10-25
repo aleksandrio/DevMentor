@@ -36,7 +36,7 @@ Nauka programowania na własną rękę często kończy się utknięciem na probl
 
 ## Architektura
 
-> Architekturę wprowadzono według specyfikacji [`.ai/specs/2026-10-25-monorepo-migration.md`](.ai/specs/2026-10-25-monorepo-migration.md). Szczegółowe zasady dla osób i agentów rozwijających projekt są w [`AGENTS.md`](AGENTS.md).
+> Architekturę wprowadzono według specyfikacji [`.ai/specs/implemented/2026-10-25-monorepo-migration.md`](.ai/specs/implemented/2026-10-25-monorepo-migration.md). Szczegółowe zasady dla osób i agentów rozwijających projekt są w [`AGENTS.md`](AGENTS.md).
 
 DevMentor to monorepo oparte na npm workspaces. Kod jest podzielony na pakiety w katalogu `packages/`:
 

@@ -1,7 +1,7 @@
 # shadcn CLI w pakiecie `ui`: `init` nie działa, `add` działa
 
 - **Data:** 2026-10-25
-- **Źródło:** run `.ai/runs/2026-10-25-monorepo-phase-2.md`, spec `.ai/specs/2026-10-25-monorepo-migration.md`
+- **Źródło:** run `.ai/runs/2026-10-25-monorepo-phase-2.md`, spec `.ai/specs/implemented/2026-10-25-monorepo-migration.md`
 - **Tagi:** shadcn, monorepo, tailwind
 
 ## Kontekst
