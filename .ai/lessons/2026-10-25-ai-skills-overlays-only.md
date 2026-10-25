@@ -18,7 +18,7 @@ Agent zainstalował pełne kopie 53 skilli `om-*` do `.ai/skills/`. Człowiek to
 
 ## Rozwiązanie
 
-Skille instaluje się zwykłą drogą (`npx skills add open-mercato/skills --skill '*' -a claude-code -y`, trafiają do `.claude/skills/`). W `.ai/skills/` zostaje tylko `om-code-review/SKILL.md` z różnicami.
+Skille instaluje się zwykłą drogą (`npx skills add open-mercato/skills --skill '*' -a claude-code -y`, trafiają do `.claude/skills/`, który jest w `.gitignore`; wersje przypina commitowany `skills-lock.json`). W `.ai/skills/` zostaje tylko `om-code-review/SKILL.md` z różnicami.
 
 ## Reguła na przyszłość
 
