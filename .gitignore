@@ -46,3 +46,8 @@ next-env.d.ts
 
 # cezar metadata (lokalny stan narzędzia; reszta .ai/ jest wersjonowana)
 /.ai/cezar/
+
+# agent pipeline QA state (per run, not source; .ai/scripts/ stays committed)
+/.ai/qa/artifacts_*/
+/.ai/qa/test-env.json
+/.ai/qa/test-env.env

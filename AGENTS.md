@@ -210,10 +210,16 @@ Własna implementacja zamiast `apiHandler`/`makeCrudRoute`, `CrudForm` albo `Dat
 ├── lessons.md              # indeks wniosków; czytany na starcie każdej sesji
 ├── lessons/                # pełne opisy wniosków
 │   └── YYYY-MM-DD-slug.md
+├── agentic.config.json     # konfiguracja potoku skilli om-* (bramka walidacji, etykiety, bramka QA)
+├── trackers/               # deskryptor trackera (github.md) używany przez skille om-*
+├── browsers/               # deskryptor przeglądarki (agent-browser.md) używany przez skille om-*
+├── analysis/               # raporty generowane przez skille om-*
+├── scripts/                # skrypty środowiska generowane przez skille om-*
+├── qa/                     # stan QA; artifacts_*/, test-env.json i test-env.env są w .gitignore
 └── cezar/                  # lokalny stan narzędzia cezar (w .gitignore, nie edytuj)
 ```
 
-Wszystko poza `.ai/cezar/` jest wersjonowane w gicie i commitowane razem z kodem, którego dotyczy.
+Wszystko poza `.ai/cezar/` i plikami stanu QA w `.ai/qa/` jest wersjonowane w gicie i commitowane razem z kodem, którego dotyczy. Proces dostarczania (przepływ zgłoszeń, etykiety, bramka QA) opisuje `SDLC.md`, reguły przeglądu `CODE_REVIEW.md`, a chronione kontrakty `BACKWARD_COMPATIBILITY.md`. Przy rozbieżności z tymi plikami rozstrzyga AGENTS.md.
 
 ### Konwencja nazw (wspólna dla specs, runs i lessons)
 

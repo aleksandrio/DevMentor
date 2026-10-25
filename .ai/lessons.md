@@ -43,4 +43,5 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 
 ## Proces
 
+- [Skille `om-*` dostarcza cezar przy starcie zadania](lessons/2026-10-25-cezar-provisions-om-skills.md): w zadaniu cezara brak katalogu `om-*` w `.claude/skills/` nie oznacza braku skilla (cezar kopiuje go z `open-mercato/skills` na żądanie), więc nie proponuj instalacji; poza cezarem: `npx skills add open-mercato/skills --skill '*'`.
 - [Dokument spoza cyklu SDD nie zmienia architektury sam](lessons/2026-10-25-agents-md-over-foreign-specs.md): przy sprzeczności dokumentu zewnętrznego z AGENTS.md zapytaj człowieka, która strona wygrywa, i przełóż decyzję na datowaną specyfikację aktualizującą AGENTS.md (tak wdrożono `2026-09-01-engineering-standards.md`).
