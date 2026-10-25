@@ -1,4 +1,7 @@
-# Local development database. Start with `docker compose up -d`.
+# Local development database. Start with `docker compose up -d` (or `npm run setup`).
+# A fixed project name: every worktree and clone shares one database on port 5432.
+name: devmentor
+
 services:
   postgres:
     image: postgres:17
