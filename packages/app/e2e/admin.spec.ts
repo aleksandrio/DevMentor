@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
-
-const databaseConfigured = !!process.env.DATABASE_URL?.trim();
+import { databaseConfigured } from "./support";
 
 test.describe("admin panel", () => {
   test("renders the shadcn/ui card with styles", async ({ page }) => {

@@ -1,5 +1,6 @@
 import { defineEntity, p } from "@mikro-orm/postgresql";
 import { baseProperties } from "../base.entity";
+import { pinEntityName } from "../pin-entity-name";
 import { USER_ROLES } from "./user-role";
 
 // RFC 5321 caps a forward path at 256 octets including the angle brackets.
@@ -21,4 +22,5 @@ const UserSchema = defineEntity({
 });
 
 export class User extends UserSchema.class {}
+pinEntityName(User, "User");
 UserSchema.setClass(User);
