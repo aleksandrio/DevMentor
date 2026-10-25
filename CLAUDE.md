@@ -14,6 +14,7 @@ Pełne zasady są w zaimportowanym wyżej `AGENTS.md`, który ma pierwszeństwo 
 | `.ai/runs/YYYY-MM-DD-slug.md` | log każdego autonomicznego przebiegu AI |
 | `.ai/lessons.md` | indeks wniosków, jedna linia na wniosek |
 | `.ai/lessons/YYYY-MM-DD-slug.md` | pełny opis jednego wniosku |
+| `.ai/agentic.config.json`, `.ai/trackers/`, `.ai/browsers/` | konfiguracja potoku skilli `om-*` (proces: `SDLC.md`, przegląd: `CODE_REVIEW.md`, kontrakty: `BACKWARD_COMPATIBILITY.md`) |
 | `.ai/cezar/` | lokalny stan narzędzia cezar (w .gitignore, nie edytuj) |
 
 Nazwy plików: `YYYY-MM-DD-slug.md`, gdzie data to dzień utworzenia, a slug jest po angielsku, w kebab-case.
