@@ -14,6 +14,10 @@ import {
   DatabaseStatusBadge,
 } from "./_components/database-status";
 
+// Reads the database on every request (engineering standards: DB access only
+// in force-dynamic routes, so the build never needs a database).
+export const dynamic = "force-dynamic";
+
 export default function AdminPage() {
   return (
     <Card className="max-w-xl">

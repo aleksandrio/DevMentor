@@ -1,4 +1,3 @@
-import "server-only";
 import {
   asClass,
   asValue,
@@ -6,28 +5,15 @@ import {
   InjectionMode,
   type AwilixContainer,
 } from "awilix";
-import { SystemHealthService, type DatabaseHealthProbe } from "@devmentor/core";
-import {
-  getOrm,
-  MikroOrmDatabaseHealthProbe,
-  type EntityManager,
-  type MikroORM,
-} from "@devmentor/db";
-import { readAppConfig, type AppConfig } from "./config";
+import { getOrm } from "@devmentor/db";
+import { readAppConfig } from "../config/env";
+import { createLogger } from "../logger";
+import { MikroOrmDatabaseHealthProbe } from "../services/health/adapters/mikro-orm-database-health-probe";
+import { SystemHealthService } from "../services/health/system-health.service";
+import type { Cradle } from "./cradle";
 
 // Composition root: the only place that knows how the application is wired.
 // Every dependency is registered here explicitly (no auto-loading).
-export interface Cradle {
-  // Singletons
-  config: AppConfig;
-  orm: MikroORM | null;
-  // Request scope (see request-scope.ts)
-  /** Registered per request; only when a database is configured. */
-  em: EntityManager;
-  databaseHealthProbe: DatabaseHealthProbe | null;
-  systemHealthService: SystemHealthService;
-}
-
 async function buildContainer(): Promise<AwilixContainer<Cradle>> {
   const config = readAppConfig();
   // MikroORM 7 connects lazily, so this does not touch the database yet.
@@ -41,6 +27,7 @@ async function buildContainer(): Promise<AwilixContainer<Cradle>> {
   });
   container.register({
     config: asValue(config),
+    logger: asValue(createLogger(config)),
     orm: asValue(orm),
     databaseHealthProbe: orm
       ? asClass(MikroOrmDatabaseHealthProbe).scoped()

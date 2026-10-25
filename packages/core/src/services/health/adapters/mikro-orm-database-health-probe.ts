@@ -1,5 +1,5 @@
-import type { DatabaseHealthProbe } from "@devmentor/core";
-import type { EntityManager } from "@mikro-orm/postgresql";
+import type { EntityManager } from "@devmentor/db";
+import type { DatabaseHealthProbe } from "../database-health-probe.port";
 
 export interface MikroOrmDatabaseHealthProbeDeps {
   /** Request-scoped fork of the ORM's EntityManager. */

@@ -15,7 +15,6 @@
     "db:debug": "mikro-orm debug"
   },
   "dependencies": {
-    "@devmentor/core": "*",
     "@mikro-orm/core": "^7.2.5",
     "@mikro-orm/migrations": "^7.2.5",
     "@mikro-orm/postgresql": "^7.2.5",

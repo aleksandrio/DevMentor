@@ -1,4 +1,4 @@
-import type { DatabaseHealthProbe } from "./database-health-probe";
+import type { DatabaseHealthProbe } from "./database-health-probe.port";
 
 export type DatabaseStatus =
   | { state: "up"; latencyMs: number }
