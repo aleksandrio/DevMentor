@@ -1,26 +1,28 @@
 {
-  "name": "tmp-next",
+  "name": "devmentor",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.17"
   },
-  "dependencies": {
-    "next": "16.4.3",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
+  "scripts": {
+    "dev": "npm run dev -w @devmentor/app --",
+    "build": "npm run build -w @devmentor/app --",
+    "start": "npm run start -w @devmentor/app --",
+    "lint": "eslint",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:migrate": "npm run db:migrate -w @devmentor/db --",
+    "db:migration:create": "npm run db:migration:create -w @devmentor/db --",
+    "db:migration:list": "npm run db:migration:list -w @devmentor/db --",
+    "db:migration:pending": "npm run db:migration:pending -w @devmentor/db --",
+    "test:e2e": "npm run test:e2e -w @devmentor/app --"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }

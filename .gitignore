@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,13 +12,16 @@
 
 # testing
 /coverage
+test-results/
+playwright-report/
+blob-report/
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
@@ -32,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,5 +44,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# cezar metadata
-.ai/
+# cezar metadata (lokalny stan narzędzia; reszta .ai/ jest wersjonowana)
+/.ai/cezar/
