@@ -9,6 +9,10 @@ if (existsSync(rootEnvFile)) {
   process.loadEnvFile(rootEnvFile);
 }
 
+// `next start` runs in production mode, where AUTH_SECRET is required. Use a
+// throwaway one unless the environment provides a secret.
+process.env.AUTH_SECRET ||= "e2e-only-secret-not-for-real-use-0123456789";
+
 const port = 3100;
 
 export default defineConfig({

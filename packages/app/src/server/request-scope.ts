@@ -1,29 +1,17 @@
 import "server-only";
-import { asValue } from "awilix";
 import { connection } from "next/server";
-import { getContainer, type Cradle } from "./container";
+import { withScope, type Cradle } from "@devmentor/core";
 
 /**
- * Runs `fn` with a fresh DI scope for the current request: its own forked
- * EntityManager and its own scoped services. Use it at the edge of a request
- * (Server Component, Server Action, Route Handler) and pass the resolved
- * services down; never resolve from the container deeper in the code.
+ * Runs `fn` in a fresh DI scope for the current request (see `withScope` in
+ * @devmentor/core). Use it in Server Components and Server Actions of routes
+ * that export `dynamic = "force-dynamic"`.
  */
 export async function withRequestScope<T>(
   fn: (cradle: Cradle) => Promise<T>,
 ): Promise<T> {
-  // Never touch the database while prerendering; wait for a real request.
+  // Second line of defence next to force-dynamic: never touch the database
+  // while prerendering, even if a route forgets the segment config.
   await connection();
-
-  const container = await getContainer();
-  const scope = container.createScope();
-  const { orm } = container.cradle;
-  if (orm) {
-    scope.register({ em: asValue(orm.em.fork()) });
-  }
-  try {
-    return await fn(scope.cradle);
-  } finally {
-    await scope.dispose();
-  }
+  return withScope(fn);
 }

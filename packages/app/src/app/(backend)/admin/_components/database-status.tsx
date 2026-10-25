@@ -1,16 +1,18 @@
 import type { DatabaseStatus as DatabaseStatusData } from "@devmentor/core";
-import { Badge } from "@devmentor/ui/components/badge";
+import { Badge } from "@devmentor/ui/components/ui/badge";
 import { withRequestScope } from "@/server/request-scope";
 
 export async function DatabaseStatus() {
-  const status = await withRequestScope(({ systemHealthService }) =>
-    systemHealthService.checkDatabase(),
+  const status = await withRequestScope(
+    async ({ systemHealthService, logger }) => {
+      const result = await systemHealthService.checkDatabase();
+      if (result.state === "down") {
+        // Keep connection details in the server log instead of the page.
+        logger.error({ reason: result.reason }, "database health check failed");
+      }
+      return result;
+    },
   );
-  if (status.state === "down") {
-    // The panel has no authentication yet, so keep connection details in the
-    // server log instead of the page.
-    console.error(`[admin] database health check failed: ${status.reason}`);
-  }
   return <DatabaseStatusBadge status={status} />;
 }
 

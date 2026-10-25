@@ -42,36 +42,36 @@ DevMentor to monorepo oparte na npm workspaces. Kod jest podzielony na pakiety w
 
 ```
 packages/
-├── app/   # @devmentor/app: aplikacja Next.js (strony, routing, Server Actions, kontener DI)
-├── core/  # @devmentor/core: logika domenowa i części wielokrotnego użytku
-├── db/    # @devmentor/db: PostgreSQL i MikroORM (encje, repozytoria, migracje)
-└── ui/    # @devmentor/ui: komponenty interfejsu wielokrotnego użytku (Tailwind, shadcn/ui)
+├── app/   # @devmentor/app: aplikacja Next.js (strony, routing, trasy API, Server Actions)
+├── core/  # @devmentor/core: serwisy, walidatory, kontener DI, warstwa HTTP, zdarzenia
+├── db/    # @devmentor/db: PostgreSQL i MikroORM (encje, migracje, skrypty bazy)
+└── ui/    # @devmentor/ui: komponenty interfejsu (Tailwind, shadcn/ui) i wspólna warstwa zaplecza
 ```
 
 | Pakiet | Odpowiedzialność |
 | --- | --- |
-| `app` | Główny kod aplikacji. Strony i layouty App Routera, Route Handlers i Server Actions. Tu powstaje kontener Awilix, który składa całą aplikację (composition root). |
-| `core` | Części wielokrotnego użytku: modele i serwisy domenowe, interfejsy repozytoriów, walidacja, narzędzia. Nie zależy od Next.js, Reacta ani bazy danych. |
-| `db` | Narzędzia i biblioteki do zarządzania danymi: konfiguracja MikroORM i puli połączeń, encje, implementacje repozytoriów, migracje i seedy. Działa wyłącznie po stronie serwera. |
-| `ui` | Komponenty interfejsu wielokrotnego użytku: komponenty frontendowe na Tailwindzie, komponenty shadcn/ui dla zaplecza, wspólne tokeny stylu. Dane dostaje przez propsy. |
+| `app` | Strony i layouty App Routera, trasy API (jako konfiguracja `apiHandler`/`makeCrudRoute`) i Server Actions. Do bazy i kontenera sięga tylko przez `core`. |
+| `core` | Konfiguracja środowiska (zod), logger (pino), kontener Awilix, serwisy domenowe, walidatory zod współdzielone z formularzami, warstwa HTTP (błędy, koperta odpowiedzi, sesje, CSRF, limit prób) i zdarzenia domenowe. Nie zależy od Next.js ani Reacta. |
+| `db` | Konfiguracja MikroORM i puli połączeń, encje, migracje i skrypty bazy. Działa wyłącznie po stronie serwera i nie zależy od innych pakietów. |
+| `ui` | Prymitywy shadcn/ui, komponenty frontendowe na Tailwindzie, wspólne tokeny stylu oraz warstwa zaplecza: `apiCall`, `CrudForm`, `DataTable` i stany ładowania, błędu i pustej listy. Nie zależy od innych pakietów; dane dostaje przez propsy. |
 
 ### Zależności między pakietami
 
 ```
-app ──► core
-app ──► db ──► core
-app ──► ui ──► core
+app ──► core ──► db
+app ──► ui
 ```
 
-`core` jest rdzeniem bez zależności od pozostałych pakietów. `db` i `ui` korzystają z `core`, ale nie wiedzą o sobie nawzajem. `app` łączy wszystko w działającą aplikację. Cykle zależności są niedozwolone.
+`db` i `ui` nie zależą od żadnego innego pakietu. `core` korzysta z `db` i składa aplikację w kontenerze Awilix. `app` korzysta z `core` i `ui`. Cykle zależności są niedozwolone.
 
 ### Przepływ żądania
 
-1. Żądanie trafia do Server Component, Server Action albo Route Handlera w `packages/app`.
-2. Aplikacja tworzy zakres kontenera Awilix (`withRequestScope` w `packages/app/src/server/request-scope.ts`: `container.createScope()`) z własnym `EntityManager` MikroORM (`em.fork()`).
-3. Z zakresu rozwiązywany jest serwis z `core`. Serwis dostaje swoje zależności, np. repozytoria z `db`, przez konstruktor.
-4. Repozytorium odczytuje lub zapisuje dane w PostgreSQL przez MikroORM, korzystając ze wspólnej puli połączeń.
-5. Wynik w postaci typów domenowych lub DTO wraca do warstwy `app`, która renderuje go komponentami z `ui`.
+1. Komponent kliencki wywołuje trasę API przez `apiCall` z `@devmentor/ui` (z nagłówkiem CSRF), a formularz najpierw waliduje dane tym samym schematem zod, którego używa serwer.
+2. Trasa w `packages/app/src/app/api/` to `apiHandler` albo `makeCrudRoute` z `@devmentor/core`: sprawdza CSRF i sesję, tworzy zakres kontenera (`withScope`: `container.createScope()` z własnym `em.fork()`) i parsuje body schematem zod.
+3. Z zakresu rozwiązywany jest serwis z `core`, który pracuje na encjach z `db` przez `EntityManager` i zwraca DTO.
+4. `apiHandler` zwraca kopertę `{ ok: true, data }` albo `{ ok: false, error }`, a `CrudForm` i `DataTable` pokazują wynik, błędy pól i stany ładowania.
+
+Server Components korzystają z tego samego zakresu przez `withRequestScope` (`packages/app/src/server/request-scope.ts`).
 
 ### Baza danych
 
@@ -82,7 +82,7 @@ Schemat bazy zmienia się wyłącznie przez migracje MikroORM przechowywane w `p
 - **Strony frontendowe**, czyli publiczna część serwisu dla uczących się i mentorów, są stylowane Tailwind CSS.
 - **Strony backendowe**, czyli panel administracyjny i inne strony zaplecza, są zbudowane z komponentów shadcn/ui.
 
-Obie części korzystają z komponentów i tokenów stylu z pakietu `ui` i są rozdzielone grupami tras App Routera: `src/app/(frontend)` (strona główna) i `src/app/(backend)/admin` (panel pod adresem `/admin`). Komponenty shadcn/ui dodajesz poleceniem `npx shadcn@latest add <komponent> -c packages/ui`.
+Obie części korzystają z komponentów i tokenów stylu z pakietu `ui` i są rozdzielone grupami tras App Routera: `src/app/(marketing)` (strona główna), `src/app/(auth)` (`/login`, `/register`) i `src/app/(backend)/admin` (panel pod adresem `/admin`, lista kont pod `/admin/users` tylko dla administratorów). Komponenty shadcn/ui dodajesz poleceniem `npx shadcn@latest add <komponent> -c packages/ui`.
 
 Szczegółowe zasady dla agentów AI i osób rozwijających projekt opisuje [`AGENTS.md`](AGENTS.md).
 
@@ -109,10 +109,12 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 Aplikacja buduje się i uruchamia bez bazy. Baza jest potrzebna do migracji i funkcji, które z niej korzystają.
 
 ```bash
-cp .env.example .env     # DATABASE_URL dla lokalnej bazy z docker-compose.yml
+cp .env.example .env     # DATABASE_URL dla lokalnej bazy z docker-compose.yml; uzupełnij AUTH_SECRET
 docker compose up -d     # PostgreSQL 17 na porcie 5432
 npm run db:migrate       # wykonuje oczekujące migracje MikroORM
 ```
+
+`AUTH_SECRET` podpisuje sesje (co najmniej 32 bajty, np. `openssl rand -base64 32`) i jest wymagany w produkcji. Konto zakładasz na `/register`. Rolę administratora (dostęp do `/admin/users`) nadaje tylko `npm run db:user:promote -- --email <e-mail>`; po zmianie roli zaloguj się ponownie.
 
 Nową migrację po zmianie encji tworzysz poleceniem `npm run db:migration:create -- --name <nazwa>`.
 
@@ -123,7 +125,7 @@ npx playwright install chromium   # jednorazowo: przeglądarka dla Playwrighta
 npm run test:e2e                  # build, next start na porcie 3100, testy w Chromium
 ```
 
-Testy są w `packages/app/e2e/`. Jeśli w `.env` jest `DATABASE_URL`, testy oczekują działającej bazy (uruchom wcześniej `docker compose up -d` i `npm run db:migrate`).
+Testy są w `packages/app/e2e/`. Jeśli w `.env` jest `DATABASE_URL`, testy oczekują działającej bazy (uruchom wcześniej `docker compose up -d` i `npm run db:migrate`) i obejmują też rejestrację, logowanie i panel `/admin/users`. Testy jednostkowe (Vitest, `packages/core`) uruchamia `npm run test`.
 
 ### Dostępne skrypty
 
@@ -134,11 +136,14 @@ Testy są w `packages/app/e2e/`. Jeśli w `.env` jest `DATABASE_URL`, testy ocze
 | `npm run start` | Uruchamia zbudowaną wersję produkcyjną     |
 | `npm run lint`  | Sprawdza kod i granice pakietów za pomocą ESLint |
 | `npm run typecheck` | Sprawdza typy w każdym pakiecie workspace |
+| `npm run test` | Uruchamia testy jednostkowe (Vitest) |
 | `npm run test:e2e` | Buduje aplikację i uruchamia testy end-to-end w Playwright (Chromium) |
+| `npm run audit` | Sprawdza zależności produkcyjne (`npm audit`, próg high) |
 | `npm run db:migrate` | Wykonuje oczekujące migracje bazy danych |
 | `npm run db:migration:create` | Tworzy migrację na podstawie zmian w encjach |
 | `npm run db:migration:list` | Pokazuje wykonane migracje |
 | `npm run db:migration:pending` | Pokazuje oczekujące migracje |
+| `npm run db:user:promote` | Nadaje rolę administratora (`-- --email <e-mail>`) |
 
 Skrypty uruchamiasz w katalogu głównym. `dev`, `build` i `start` delegują do pakietu `@devmentor/app`. Zależność dodajesz do pakietu, który jej używa, np. `npm install zod -w @devmentor/core`.
 
@@ -146,10 +151,10 @@ Skrypty uruchamiasz w katalogu głównym. `dev`, `build` i `start` delegują do 
 
 ```
 packages/
-├── app/            # @devmentor/app: aplikacja Next.js (src/app/(frontend), src/app/(backend)/admin, public/)
-├── core/           # @devmentor/core: logika domenowa
-├── db/             # @devmentor/db: MikroORM (src/config.ts, src/entities, src/migrations), tylko serwer
-└── ui/             # @devmentor/ui: komponenty shadcn/ui (src/components), tokeny i style Tailwinda (globals.css)
+├── app/            # @devmentor/app: Next.js (src/app/(marketing), (auth), (backend)/admin, api/; e2e/)
+├── core/           # @devmentor/core: config, container, services/<pojęcie>, validators/<pojęcie>, http, events
+├── db/             # @devmentor/db: MikroORM (src/config.ts, src/entities/<pojęcie>, src/migrations, src/scripts)
+└── ui/             # @devmentor/ui: shadcn/ui (src/components/ui), src/backend (apiCall, CrudForm, DataTable), globals.css
 tsconfig.base.json  # wspólna konfiguracja TypeScriptu
 eslint.config.mjs   # ESLint dla całego repo, w tym granice pakietów
 .ai/                # specyfikacje, logi przebiegów AI i wnioski (zob. AGENTS.md)

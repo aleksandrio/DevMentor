@@ -18,98 +18,182 @@ O projekcie przeczytasz w `README.md`. Stos opisuje sekcja „Architektura i sto
 
 To są założenia architektoniczne projektu. Trzymaj się ich w każdej zmianie. Odejście od nich (inna biblioteka, nowy pakiet, zmiana kierunku zależności) to decyzja architektoniczna: wymaga specyfikacji w `.ai/specs/` i zgody człowieka.
 
-> Architektura opisana niżej jest wdrożona (`.ai/specs/implemented/2026-10-25-monorepo-migration.md`). Wzorcem dla nowych funkcji jest przepływ statusu bazy na `/admin`: `core/src/health/` → `db/src/health/` → `app/src/server/container.ts` → `app/src/app/(backend)/admin/_components/database-status.tsx`.
+> Architektura opisana niżej jest wdrożona (`.ai/specs/implemented/2026-10-25-monorepo-migration.md`, a standardy inżynieryjne w `.ai/specs/2026-10-25-engineering-standards-adoption.md`). Pełne uzasadnienie zasad (DRY, SRP, odwrócenie zależności, YAGNI) jest w `.ai/specs/2026-09-01-engineering-standards.md`. Przykładem referencyjnym dla nowych funkcji jest pojęcie `auth`: encja `db/src/entities/auth/user.entity.ts` → serwis `core/src/services/auth/user.service.ts` → walidatory `core/src/validators/auth/` → rejestracja w `core/src/container/container.ts` → trasa `app/src/app/api/users/route.ts` (`makeCrudRoute`) → strona `app/src/app/(backend)/admin/users/` (`apiCall` + `DataTable`).
 
 ### Stos
 
 | Obszar | Technologia | Uwagi |
 | --- | --- | --- |
-| Framework | Next.js (najnowsza wersja, App Router) | Przed pisaniem kodu czytaj `node_modules/next/dist/docs/`, bo API różni się od tego, co znasz z treningu. |
+| Framework | Next.js (najnowsza wersja, App Router) | Przed pisaniem kodu czytaj `node_modules/next/dist/docs/`, bo API różni się od tego, co znasz z treningu. `cacheComponents` jest wyłączone (zob. „Baza danych”). |
 | Język | TypeScript w trybie `strict` | Bez `any` i `@ts-ignore` bez uzasadnienia w komentarzu. |
 | UI | React (najnowsza wersja) | Domyślnie Server Components. `"use client"` tylko tam, gdzie potrzebna jest interaktywność. |
 | Baza danych | PostgreSQL | Jedyna wspierana baza. |
 | ORM | MikroORM | Encje, migracje, pula połączeń, Unit of Work. |
-| Dependency Injection | Awilix | Jeden kontener złożony w pakiecie `app`. |
+| Dependency Injection | Awilix | Jeden kontener w `packages/core/src/container/`. |
+| Walidacja | zod | Jeden schemat na wejście, używany przez trasę API i przez formularz. Konfiguracja środowiska też przechodzi przez zod. |
+| Logowanie | pino | Jeden logger z kontenera (`logger`), z redakcją haseł, tokenów i ciasteczek. Bez `console.log` w kodzie aplikacji. |
+| Hasła i sesje | bcryptjs, jose | bcrypt z kosztem 12; sesja to JWT HS256 w ciasteczku `httpOnly`. |
 | Style stron frontendowych | Tailwind CSS | Publiczna część serwisu (strony dla uczących się i mentorów). |
 | Komponenty stron backendowych | shadcn/ui (na Tailwindzie) | Panel administracyjny i inne strony zaplecza. |
 | Monorepo | npm workspaces | Pakiety w katalogu `packages/`. Node.js ≥ 22.17 (wymóg MikroORM 7, pole `engines`). Skrypty w katalogu głównym delegujące do pakietu kończą się `--`, żeby przekazywały argumenty (`npm run dev -- -p 3001`). |
-| Jakość | ESLint, `tsc` | `npm run lint`, `npm run typecheck` i `npm run build` przed każdym commitem. |
+| Testy | Vitest, Playwright | Vitest dla `core` (`npm run test`), Playwright dla przeglądarki (`npm run test:e2e`). |
+| Jakość | ESLint, `tsc`, `npm audit` | Zob. „Weryfikacja zmian w kodzie”. |
 
-Nie dodawaj alternatyw dla powyższych narzędzi (innego ORM-a, query buildera, kontenera DI, biblioteki komponentów czy CSS-in-JS) bez specyfikacji.
+Nie dodawaj alternatyw dla powyższych narzędzi (innego ORM-a, query buildera, kontenera DI, biblioteki walidacji, loggera, biblioteki komponentów czy CSS-in-JS) bez specyfikacji. Nie dodawaj zależności do czegoś, co pokrywa 20 linii własnego kodu.
 
 ### Monorepo i pakiety
 
 ```
 packages/
-├── app/   # @devmentor/app: aplikacja Next.js, routing, strony, Server Actions, composition root DI
-├── core/  # @devmentor/core: logika domenowa i części wielokrotnego użytku, niezależne od frameworka
-├── db/    # @devmentor/db: MikroORM, encje, repozytoria, migracje, konfiguracja połączenia
-└── ui/    # @devmentor/ui: komponenty interfejsu wielokrotnego użytku, w tym komponenty shadcn/ui
+├── app/   # @devmentor/app: aplikacja Next.js, routing, strony, Route Handlers (jako konfiguracja), Server Actions
+├── core/  # @devmentor/core: konfiguracja, kontener DI, serwisy, walidatory, warstwa HTTP, zdarzenia
+├── db/    # @devmentor/db: MikroORM, encje, migracje, konfiguracja połączenia, skrypty CLI bazy
+└── ui/    # @devmentor/ui: prymitywy shadcn/ui, komponenty pojęć, wspólna warstwa UI zaplecza
 ```
 
-To minimalny zestaw. Nowy pakiet dodajesz tylko na podstawie specyfikacji, w `packages/<nazwa>` i z nazwą `@devmentor/<nazwa>`.
+To jedyna struktura. Nowy pakiet dodajesz tylko na podstawie specyfikacji, w `packages/<nazwa>` i z nazwą `@devmentor/<nazwa>`. Nie twórz katalogów `modules/<pojęcie>/`, plików `setup.ts`/`acl.ts` dla pojęć ani mechanizmów automatycznego wykrywania.
 
 | Pakiet | Co zawiera | Czego nie zawiera |
 | --- | --- | --- |
-| `app` | Katalog `app/` Next.js (strony, layouty, Route Handlers, Server Actions), kontener Awilix i jego rejestracje, konfiguracja środowiska, cienkie warstwy łączące UI z serwisami. | Logiki domenowej, zapytań do bazy wprost w komponentach, komponentów wielokrotnego użytku. |
-| `core` | Typy i modele domenowe, serwisy i przypadki użycia, interfejsy (porty) repozytoriów i usług zewnętrznych, walidacja, błędy domenowe, narzędzia ogólnego przeznaczenia. | Importów z `next`, `react`, `@mikro-orm/*` i innych pakietów `@devmentor/*`. |
-| `db` | Konfiguracja MikroORM, encje, implementacje repozytoriów z `core`, migracje, seedy, skrypty CLI bazy. | Kodu UI i importów z `next` (poza `server-only`). |
-| `ui` | Komponenty React wielokrotnego użytku: prymitywy shadcn/ui, komponenty frontendowe, wspólne style i tokeny Tailwinda, hooki UI. | Pobierania danych, wywołań serwisów, importów z `db`. Komponenty dostają dane przez propsy. |
+| `app` | Katalog `app/` Next.js (strony, layouty, Route Handlers, Server Actions), cienkie nakładki serwerowe (`server/request-scope.ts`, `server/session.ts`), komponenty używane przez jedną stronę. | Logiki domenowej, zapytań do bazy, importów `@devmentor/db`, `@mikro-orm/*` i `awilix`, ręcznego `try/catch` w trasach API. |
+| `core` | Konfiguracja środowiska (`config/env.ts`), logger, kontener Awilix i `Cradle`, serwisy (`services/<pojęcie>/`), porty integracji zewnętrznych i ich adaptery, walidatory zod (`validators/<pojęcie>/`), warstwa HTTP (`http/`), zdarzenia (`events/`). | Importów z `next`, `react`, `@mikro-orm/*` (typy ORM bierze z `@devmentor/db`), `@devmentor/app` i `@devmentor/ui`. |
+| `db` | Konfiguracja MikroORM, encje (`entities/<pojęcie>/`), migracje, skrypty CLI bazy (`scripts/`). | Kodu UI, importów z `next`, `awilix` i żadnego innego pakietu `@devmentor/*`. |
+| `ui` | Prymitywy shadcn/ui (`components/ui/`), komponenty pojęć (`components/<pojęcie>/`), wspólna warstwa zaplecza (`backend/`), tokeny Tailwinda. | Importów z innych pakietów `@devmentor/*`, dostępu do danych poza `apiCall`, DI. Komponenty dostają dane przez propsy. |
 
 Dozwolony kierunek zależności między pakietami:
 
 ```
-app ──► core
-app ──► db ──► core
-app ──► ui ──► core (tylko typy i czyste funkcje pomocnicze)
+app ──► core ──► db
+app ──► ui            (ui jest samodzielny)
 ```
 
-- `core` nie zależy od żadnego innego pakietu `@devmentor/*`.
-- `db` i `ui` nie zależą od siebie nawzajem ani od `app`.
+- `db` nie zależy od żadnego innego pakietu `@devmentor/*`, a `ui` też nie.
+- `app` sięga do bazy i kontenera wyłącznie przez `core`.
 - Cykle zależności są zabronione.
 - Granice egzekwuje reguła `no-restricted-imports` w `eslint.config.mjs`. Nie wyłączaj jej. Jeśli granica blokuje sensowną zmianę, to jest decyzja architektoniczna wymagająca specyfikacji.
+- `@devmentor/core` ma dwa wejścia. `@devmentor/core` to kod serwerowy (`server-only`). `@devmentor/core/validators/*` to schematy zod bezpieczne dla klienta: importują tylko `zod` i inne walidatory (pilnuje tego ESLint), więc komponent kliencki może ich użyć do walidacji formularza. Typy z `@devmentor/core` wolno importować w kodzie klienckim przez `import type`.
+- Koperta odpowiedzi API jest konwencją kształtu, a nie wspólnym typem. `core/src/http` i `ui/src/backend/api` deklarują ją osobno, bo `ui` nie importuje `core`. Wspólny pakiet na takie typy to decyzja wymagająca specyfikacji.
 - Pakiety `core`, `db` i `ui` nie mają kroku budowania: `exports` wskazuje pliki źródłowe `.ts`, a Next.js transpiluje je sam. Wspólne ustawienia TypeScriptu są w `tsconfig.base.json`.
 - Importuj pakiety po nazwie (`@devmentor/core`) i tylko przez ich publiczny punkt wejścia (`exports` w `package.json`). Nie sięgaj do `../../packages/x/src/...`.
 - Zależności npm instaluj w pakiecie, który ich używa (`npm install <pkg> -w @devmentor/<nazwa>`), a nie w katalogu głównym. W katalogu głównym trzymaj tylko narzędzia całego repozytorium (ESLint, TypeScript, skrypty).
 
+### Konwencja pojęć domenowych
+
+Kod domenowy nie jest podzielony na moduły. Każde pojęcie (`auth`, `mentors`, `availability`, `bookings`, `payments`, `messages`, `favorites`, `reviews`, …) to podkatalog o tej samej nazwie powtórzony w warstwach, które go potrzebują:
+
+- `packages/db/src/entities/<pojęcie>/<nazwa>.entity.ts`
+- `packages/core/src/services/<pojęcie>/<nazwa>.service.ts`
+- `packages/core/src/validators/<pojęcie>/<nazwa>-<akcja>.schema.ts` (gdy jest wejście do walidacji)
+- `packages/app/src/app/api/<pojęcie>/route.ts` i strony w grupie tras persony: `(marketing)`, `(auth)`, `(student)`, `(mentor)`, a zaplecze w `(backend)/admin`
+- `packages/ui/src/components/<pojęcie>/` (komponenty związane z kształtem danych pojęcia)
+
+Katalog pojęcia (i grupę tras persony) tworzysz dopiero z pierwszym plikiem. Nie twórz pustych katalogów na zapas. Encja i serwis występują w parze.
+
+Nazewnictwo:
+
+| Element | Konwencja | Przykład |
+| --- | --- | --- |
+| Katalog pojęcia | liczba mnoga, jedno słowo, zgodne z przestrzenią nazw zdarzeń | `bookings`, `payments` |
+| Encja | klasa w PascalCase w liczbie pojedynczej przez `defineEntity`, plik `<nazwa>.entity.ts` | `Booking` → `entities/bookings/booking.entity.ts` |
+| Tabela / kolumna | snake_case, tabela w liczbie mnogiej | `bookings`, `created_at` ← `createdAt` |
+| Serwis | PascalCase + `Service`, plik `<nazwa>.service.ts` | `BookingService` |
+| Port | PascalCase + `Gateway`/`Port`, plik `<nazwa>.port.ts` | `PaymentGateway` → `services/payments/payment-gateway.port.ts` |
+| Adapter | PascalCase z nazwą adaptera, w `adapters/` | `services/payments/adapters/mock-payment-gateway.ts` |
+| Klucz w `Cradle` | camelCase, jeden wpis na zależność | `bookingService: BookingService` |
+| Schemat zod | camelCase + `Schema`, plik `<nazwa>.schema.ts` | `bookingCreateSchema` → `validators/bookings/booking-create.schema.ts` |
+| Zdarzenie | `pojęcie.encja.akcja`, czas przeszły | `bookings.booking.created` |
+| Strona | `<segment>/page.tsx`, domyślny eksport `<Segment>Page` | `SessionsPage` |
+| Błąd | PascalCase + `Error`, dziedziczy po `AppError` (`core/src/http/errors.ts`) | `NotFoundError` |
+| Plik komponentu | kebab-case, komponent w PascalCase | `crud-form.tsx` → `CrudForm` |
+
+Zdarzenia definiujesz w `core/src/events/event-map.ts` i emitujesz przez `eventBus` z kontenera po udanej zmianie danych. Subskrybentów rejestrujesz w `core/src/events/subscribers.ts`. To emiter w procesie: bez kolejek i workerów.
+
+Integracje zewnętrzne (płatności, powiadomienia, wideo) idą przez port w `core` z adapterem testowym na MVP. Prawdziwy adapter (np. Stripe) podmieniasz w kontenerze bez zmian w kodzie wywołującym.
+
+### Wspólna warstwa API i UI
+
+Każda trasa i każda strona korzysta z dwóch wspólnych warstw zamiast pisać od nowa pobieranie danych, walidację, autoryzację i obsługę błędów. Nową część tych warstw dodajesz tylko dla naprawdę nowego wzorca.
+
+**Serwer: `packages/core/src/http/`**
+
+- `errors.ts`: hierarchia `AppError` (`ValidationError` 400, `UnauthorizedError` 401, `ForbiddenError` 403, `NotFoundError` 404, `ConflictError` 409, `RateLimitError` 429, `ServiceUnavailableError` 503). Serwisy rzucają tylko te błędy i nigdy nie budują odpowiedzi HTTP.
+- `api-handler.ts`: `apiHandler(fn, { auth })` opakowuje każdą trasę: sprawdza CSRF, uwierzytelnia (domyślnie `"session"`, poza tym `"public"` albo rola), otwiera zakres DI, zwraca kopertę `{ ok: true, data }` / `{ ok: false, error: { code, message, fieldErrors? } }`, a nieoczekiwane błędy loguje i zamienia na ogólne 500. Status i nagłówki (np. `Set-Cookie`) ustawiasz, zwracając `new ApiResponse(data, init)`.
+- `make-crud-route.ts`: `makeCrudRoute({ service, schemas, auth })` daje `{ GET, POST, PUT, DELETE }` dla zasobów, które są zwykłym CRUD-em. Plik `route.ts` staje się konfiguracją. Przepływy, które nie są CRUD-em (rezerwacja, płatność, logowanie), używają `apiHandler` wprost.
+- `validation.ts`: `parseBody(request, schema)`. Do serwisu trafia tylko wynik schematu, nigdy surowe body.
+- `auth.ts`: `requireSession`, `requireRole`, `assertOwns`, wydawanie i czyszczenie ciasteczka sesji. `csrf.ts` i `rate-limit.ts` to ochrona CSRF i limit prób.
+
+W `packages/app/src/app/api` nie piszesz `try/catch` ani ręcznego `Response.json`/`NextResponse.json`.
+
+**Klient: `packages/ui/src/backend/`**
+
+- `api/api-call.ts`: `apiCall`/`apiCallOrThrow` to jedyne miejsce z `fetch()` do `/api/*` (reguła `no-restricted-globals`). Ustawia nagłówek CSRF i bezpiecznie czyta kopertę (`readJsonSafe`).
+- `forms/crud-form.tsx`: `CrudForm` z tym samym schematem zod co trasa; pokazuje `fieldErrors` z serwera przy polach, obsługuje stan wysyłania, `Cmd/Ctrl+Enter` i `Escape`. Używaj go do każdego formularza tworzenia i edycji.
+- `tables/data-table.tsx`: `DataTable` z konfiguracji kolumn, ze stanami ładowania, pustej listy i błędu, z paginacją i akcjami wiersza. Używaj go do każdej listy.
+- `feedback/`: `LoadingMessage`, `ErrorMessage`, `EmptyState` to jedyne komponenty tych stanów.
+
+Gdzie trafia nowy komponent:
+
+1. Prymityw shadcn → `ui/src/components/ui/`, tylko przez `npx shadcn@latest add`.
+2. Ogólny wzorzec zaplecza niezależny od pojęcia (nowy typ pola, komórki, stanu) → `ui/src/backend/<kategoria>/`.
+3. Komponent związany z kształtem danych jednego pojęcia → `ui/src/components/<pojęcie>/`.
+4. Komponent używany przez jedną stronę → obok jej `page.tsx` (`_components/`), dopóki nie pojawi się drugi użytkownik.
+
+Własna implementacja zamiast `apiHandler`/`makeCrudRoute`, `CrudForm` albo `DataTable` wymaga uzasadnienia w opisie PR.
+
 ### Baza danych: PostgreSQL i MikroORM
 
-- Cały kod MikroORM (konfiguracja, encje, repozytoria, migracje) mieszka w `packages/db`. Inne pakiety nie importują `@mikro-orm/*` bezpośrednio. Wyjątkiem jest `app`, który rejestruje instancję ORM w kontenerze i otwiera kontekst żądania.
+- Kod MikroORM (konfiguracja, encje, migracje) mieszka w `packages/db`. Żaden inny pakiet nie importuje `@mikro-orm/*`. `core` korzysta z `EntityManager` i encji eksportowanych przez `@devmentor/db`.
 - Połączenie konfiguruje zmienna środowiskowa `DATABASE_URL`. Nie zapisuj danych dostępowych w kodzie ani w repozytorium. Ustawienia puli połączeń trzymaj w konfiguracji MikroORM w `packages/db`.
-- W procesie istnieje jedna instancja `MikroORM`. W trybie deweloperskim przechowuj ją w `globalThis`, żeby HMR nie otwierał nowych pul połączeń.
-- Globalnego `EntityManager` nie używaj do obsługi żądań. Każde żądanie, Server Action i zadanie w tle pracuje na własnym `em.fork()` (albo w `RequestContext`).
+- W procesie istnieje jedna instancja `MikroORM` (`getOrm` trzyma ją w `globalThis`, żeby HMR nie otwierał nowych pul połączeń).
+- Globalnego `EntityManager` nie używaj do obsługi żądań. Każde żądanie, Server Action i zadanie w tle pracuje na własnym `em.fork()` (przez `withScope`).
 - Zmiany schematu wprowadzaj wyłącznie migracjami MikroORM generowanymi w `packages/db`. Migracje commituj razem z encjami. Nie edytuj migracji, która trafiła na gałąź główną: popraw błąd nową migracją. `schema:update` jest dozwolone tylko lokalnie do eksperymentów.
-- Kod bazy działa tylko na serwerze. Pakiet `db` nie może trafić do bundla klienta (używaj `server-only`, a w Next.js dodaj pakiety MikroORM do `serverExternalPackages`, jeśli bundler tego wymaga).
-- Encje to szczegół warstwy danych. Do `core` i do komponentów UI przekazuj typy domenowe albo DTO, a nie encje MikroORM.
-- Używamy MikroORM 7 (tylko ESM). Encje definiujesz przez `defineEntity` (bez dekoratorów) i rejestrujesz ręcznie w `packages/db/src/entities/index.ts`. Nie ma wykrywania po folderach. Gdy dodasz pierwszą encję, usuń `discovery.warnWhenNoEntities: false` z `packages/db/src/config.ts`.
-- Aplikacja dostaje ORM przez `getOrm({ databaseUrl })` z `@devmentor/db` (singleton w `globalThis`). Konfiguracja dla CLI jest w `packages/db/src/mikro-orm.config.ts` i tylko ona dołącza Migrator.
-- Zmienne środowiskowe trzymasz w jednym pliku `.env` w katalogu głównym repozytorium (wzór: `.env.example`). Czytają go Next.js i CLI MikroORM, oba przez `process.loadEnvFile()` (w `packages/app/next.config.ts` i `packages/db/src/mikro-orm.config.ts`). Zmienne ustawione w powłoce mają pierwszeństwo. Obsługiwany jest tylko `.env`, bez wariantów `.env.local` i `.env.development`. Nie twórz `.env` w pakietach i nie używaj do tego `loadEnvConfig` z `@next/env` (zob. `.ai/lessons.md`).
-- Komendy bazy uruchamiasz w katalogu głównym: `npm run db:migrate`, `npm run db:migration:create -- --name <nazwa>`, `npm run db:migration:list`, `npm run db:migration:pending`. Lokalną bazę uruchamia `docker compose up -d`.
-- Aplikacja musi się budować i startować bez dostępnej bazy. Nie łącz się z bazą na poziomie modułu ani podczas prerenderowania; połączenie otwiera dopiero `getOrm()` wywołane w obsłudze żądania.
+- Kod bazy działa tylko na serwerze (`server-only`). Pakiety MikroORM są na domyślnej liście `serverExternalPackages` Next.js.
+- Encje to szczegół warstwy danych. Z serwisów zwracasz DTO (np. `UserDto`), a nie encje MikroORM. Kolumny wrażliwe (hash hasła) oznaczasz `.hidden()`.
+- Używamy MikroORM 7 (tylko ESM). Encje definiujesz przez `defineEntity` (bez dekoratorów), wspólne kolumny (`id` UUID, `createdAt`, `updatedAt`) dodajesz przez `...baseProperties` z `entities/base.entity.ts`, a każdą encję rejestrujesz ręcznie w `packages/db/src/entities/index.ts`. Każda klasa encji wywołuje `pinEntityName(Klasa, "<nazwa z defineEntity>")` przed `setClass` (zob. `.ai/lessons.md`).
+- Sprawdzenie, a potem zapis na współdzielonym zasobie (wolny termin, status rezerwacji, unikalny e-mail) zabezpieczasz ograniczeniem w bazie (unikalność) albo transakcją w serwisie, a nie odczytem przed zapisem. Naruszenie ograniczenia sprawdzasz przez `isUniqueConstraintViolation` z `@devmentor/db`.
+- Zapytania tylko przez API encji i query builder MikroORM. Bez surowego SQL sklejanego z danymi użytkownika.
+- Zmienne środowiskowe trzymasz w jednym pliku `.env` w katalogu głównym repozytorium (wzór: `.env.example`). Czytają go Next.js i CLI MikroORM, oba przez `process.loadEnvFile()` (w `packages/app/next.config.ts` i `packages/db/src/mikro-orm.config.ts`). Zmienne ustawione w powłoce mają pierwszeństwo. Obsługiwany jest tylko `.env`, bez wariantów `.env.local` i `.env.development`. Nie twórz `.env` w pakietach i nie używaj do tego `loadEnvConfig` z `@next/env` (zob. `.ai/lessons.md`). Każda nowa zmienna trafia do schematu zod w `core/src/config/env.ts` i do `.env.example`.
+- Komendy bazy uruchamiasz w katalogu głównym: `npm run db:migrate`, `npm run db:migration:create -- --name <nazwa>`, `npm run db:migration:list`, `npm run db:migration:pending`, `npm run db:user:promote -- --email <e-mail>` (nadaje rolę `admin`; innej drogi nie ma). Lokalną bazę uruchamia `docker compose up -d`.
+- Aplikacja musi się budować i startować bez dostępnej bazy. `cacheComponents` jest wyłączone, więc każda strona, layout i Route Handler korzystający z bazy eksportuje `export const dynamic = "force-dynamic"`. Połączenie otwiera dopiero `getOrm()` w budowie kontenera przy pierwszym żądaniu, a `withRequestScope` dodatkowo czeka na `connection()`.
 
 ### Dependency Injection: Awilix
 
-- Kontener tworzysz w jednym miejscu: composition root w `packages/app` (np. `packages/app/src/server/container.ts`). Tam rejestrujesz instancję ORM, repozytoria z `db`, serwisy z `core` i konfigurację.
-- Serwisy w `core` i repozytoria w `db` nie importują kontenera i nie znają Awilix. Zależności dostają przez konstruktor (wstrzykiwanie przez obiekt, tryb `InjectionMode.PROXY`, np. `constructor({ mentorRepository }: Deps)`).
-- Czasy życia: konfiguracja, instancja ORM i klienci usług zewnętrznych to `singleton`. Wszystko, co zależy od `EntityManager` (repozytoria, serwisy domenowe), to `scoped`. Dla każdego żądania lub Server Action tworzysz `container.createScope()` z rejestracją sforkowanego `em`.
-- Zależności rozwiązujesz tylko w kodzie serwerowym w `app`: Server Components, Server Actions, Route Handlers. Komponenty klienckie i pakiet `ui` nigdy nie korzystają z kontenera.
-- Nie wywołuj `container.resolve()` w głębi logiki (wzorzec service locator). Rozwiązuj zależność na brzegu żądania i przekazuj ją dalej.
-- Kontener jest w `packages/app/src/server/container.ts`, a typ `Cradle` wymienia każdą zależność. Nową zależność rejestrujesz jawnie: dopisujesz linię w `register` i pole w `Cradle`. Nie używaj `loadModules` ani rejestracji przez skanowanie folderów.
-- Na brzegu żądania korzystasz z `withRequestScope` z `packages/app/src/server/request-scope.ts`, np. `await withRequestScope(({ systemHealthService }) => systemHealthService.checkDatabase())`. Helper czeka na `connection()`, więc baza nigdy nie jest odpytywana podczas prerenderowania. Tworzy też scope z własnym `em.fork()` i po zakończeniu go zamyka.
-- Komponent, który pobiera dane przez `withRequestScope`, umieszczasz w `<Suspense>` (włączone `cacheComponents`). Statyczna część strony zostaje wtedy prerenderowana, a dane są doładowywane przy żądaniu. Wzorzec: `packages/app/src/app/(backend)/admin/_components/database-status.tsx`.
-- Wzorzec pionowego przepływu: port i serwis w `core` (`core/src/health/`), implementacja portu w `db` (`db/src/health/`), rejestracja w `container.ts`, użycie w Server Component. Kontener rejestruje porty zależne od bazy tylko wtedy, gdy ustawiono `DATABASE_URL`; bez niej rejestruje `null`.
+- Kontener mieszka w `packages/core/src/container/`: `container.ts` (rejestracje, jedyne miejsce, które wie, jak aplikacja jest złożona) i `cradle.ts` (typ `Cradle` z każdą zależnością). Nową zależność rejestrujesz jawnie: linia w `register` i pole w `Cradle`. Nie używaj `loadModules` ani rejestracji przez skanowanie folderów.
+- Serwisy w `core` nie importują kontenera. Zależności dostają przez konstruktor (wstrzykiwanie przez obiekt, tryb `InjectionMode.PROXY`, np. `constructor({ em, eventBus }: Deps)`).
+- Czasy życia: konfiguracja, logger, ORM, `eventBus`, limiter prób i klienci usług zewnętrznych to `singleton` (`asValue`). Wszystko, co zależy od `EntityManager` (serwisy domenowe), to `scoped`. Serwis wymagający bazy bez `DATABASE_URL` rejestrujesz jako fabrykę rzucającą `ServiceUnavailableError` (wzór: `userService`).
+- Zakres otwiera `withScope(fn)` z `@devmentor/core`: tworzy `container.createScope()` z własnym `em.fork()` i po zakończeniu go zamyka. Trasy API dostają zakres od `apiHandler` (`cradle` w kontekście). Server Components i Server Actions używają `withRequestScope` z `packages/app/src/server/request-scope.ts`, a sesję czytają przez `getSession()` z `packages/app/src/server/session.ts`.
+- Nie wywołuj `container.resolve()` w głębi logiki (wzorzec service locator). Rozwiązuj zależność na brzegu żądania i przekazuj ją dalej. Komponenty klienckie i pakiet `ui` nigdy nie korzystają z kontenera.
+- Komponent serwerowy pobierający dane przez `withRequestScope` umieszczasz w `<Suspense>`, żeby reszta strony mogła się wyrenderować wcześniej. Wzorzec: `packages/app/src/app/(backend)/admin/_components/database-status.tsx`.
+
+### Bezpieczeństwo: wymagania minimalne
+
+- Hasła: `bcryptjs` z kosztem 12 (`BCRYPT_COST`). Hasło dłuższe niż 72 bajty odrzuca walidator.
+- Sesja: JWT HS256 podpisany `AUTH_SECRET` (≥ 32 bajty, z env, wymagany w produkcji), ważny 24 h, bez odświeżania (znane ograniczenie MVP: nie wydłużaj ważności, żeby to obejść). Rola jest w tokenie, więc zmiana roli działa po ponownym zalogowaniu. Token tylko w ciasteczku `httpOnly`, `secure` w produkcji, `SameSite=Lax`, `Path=/`; nigdy w `localStorage`, logach ani odpowiedzi JSON.
+- CSRF: żądanie zmieniające stan bez nagłówka `X-Requested-With: devmentor` dostaje 403 (`apiHandler`).
+- Limit prób: logowanie i rejestracja (i każdy przyszły reset hasła) przez `authRateLimiter` (5 porażek na IP + e-mail w 15 minut). Licznik jest w pamięci procesu, a IP pochodzi z `X-Forwarded-For`; przed ruchem produkcyjnym trzeba wspólnego magazynu i zaufanego proxy.
+- Autoryzacja po stronie serwera w każdej niepublicznej trasie. Mutacje sprawdzają własność rekordu (`assertOwns`), nie tylko zalogowanie; brak sprawdzenia własności to błąd tej samej wagi co brak uwierzytelnienia. Błąd przy sprawdzaniu uprawnień kończy się odmową (fail closed).
+- Komunikaty logowania i rejestracji są ogólne i nie zdradzają, czy e-mail jest zarejestrowany.
+- Kwoty (cena sesji) liczy serwer; wartość z klienta nigdy nie jest zapisywana bez przeliczenia.
+- Sekrety tylko w env. Logger redaguje `password`, `passwordHash`, `token`, `authorization`, `cookie`, `set-cookie`; nowe wrażliwe pola dopisz do `core/src/logger.ts`.
+
+### Jakość kodu i przegląd
+
+- Jedna odpowiedzialność na plik: encja to schemat, serwis to reguły jednego pojęcia, `route.ts` to tylko HTTP (walidacja → autoryzacja → serwis → koperta).
+- Bez pustych `catch`: obsłuż, zaloguj z kontekstem przez logger albo rzuć dalej. Bez magicznych liczb: nazwana stała z uzasadnieniem wartości. Wczesne `return` zamiast głębokich `if`. Zmienne logiczne w formie pozytywnej (`isConfirmed`).
+- Bez martwego i zakomentowanego kodu oraz `console.log`. Diff PR dotyczy wyłącznie jego celu.
+- Zmiana zachowania ma test, który nie przechodzi na kodzie sprzed zmiany; poprawka błędu ma test regresji. Przepływy wrażliwe na wyścigi (rezerwacja, zmiana terminu) mają test integracyjny przypadku współbieżnego.
+- Lista kontrolna przeglądu (blokery): uwierzytelnienie po stronie serwera, autoryzacja konkretnego rekordu, sprawdzenie i zapis chronione transakcją albo ograniczeniem, brak sekretów w logach i odpowiedziach, brak niesparametryzowanego wejścia w zapytaniach, ścieżkach i komendach, zapis tylko z wyniku schematu zod (bez mass assignment), odmowa przy błędzie decyzji o dostępie. Poważne: flagi ciasteczek zachowane przy zmianach w auth, test regresji dla poprawek bezpieczeństwa, limit prób na endpointach logowania i rejestracji. Pełna lista: `.ai/specs/2026-09-01-engineering-standards.md`.
 
 ### Interfejs: Tailwind CSS i shadcn/ui
 
-- **Strony frontendowe** (publiczna część serwisu dla uczących się i mentorów) stylujesz klasami Tailwind CSS. Nie dodawaj innych bibliotek komponentów ani CSS-in-JS.
-- **Strony backendowe** (panel administracyjny, moderacja, zarządzanie treścią) budujesz z komponentów shadcn/ui. Ich wygląd zmieniasz przez warianty i klasy Tailwinda, a nie przez osobne arkusze CSS.
-- Komponenty shadcn/ui generujesz CLI shadcn do `packages/ui` i stamtąd je importujesz. Nie kopiuj ich do `packages/app`.
-  - Dodawanie: `npx shadcn@latest add <komponent> -c packages/ui` (w katalogu głównym). Konfiguracja jest w `packages/ui/components.json` (styl `base-nova`, czyli komponenty na Base UI, `@base-ui/react`).
+- **Strony frontendowe** (publiczna część serwisu dla uczących się i mentorów: grupy `(marketing)`, `(auth)`, później `(student)` i `(mentor)`) stylujesz klasami Tailwind CSS. Nie dodawaj innych bibliotek komponentów ani CSS-in-JS.
+- **Strony backendowe** (panel administracyjny, moderacja, zarządzanie treścią: `(backend)/admin`) budujesz z komponentów shadcn/ui i warstwy `ui/src/backend`. Ich wygląd zmieniasz przez warianty i klasy Tailwinda, a nie przez osobne arkusze CSS.
+- Komponenty shadcn/ui generujesz CLI shadcn do `packages/ui/src/components/ui/` i stamtąd je importujesz. Nie kopiuj ich do `packages/app` i nie pisz ich ręcznie.
+  - Dodawanie: `npx shadcn@latest add <komponent> -c packages/ui` (w katalogu głównym). Konfiguracja jest w `packages/ui/components.json` (styl `base-nova`, czyli komponenty na Base UI, `@base-ui/react`; alias `ui` → `@devmentor/ui/components/ui`).
   - Nie uruchamiaj `shadcn init` na `packages/ui`: CLI nie rozpoznaje tam frameworka, a konfiguracja jest już gotowa.
   - Link wyglądający jak przycisk to `<Link className={buttonVariants()}>`, a nie `Button` z `render={<Link />}`. Base UI nadaje wtedy elementowi `<a>` rolę `button`, przez co czytniki ekranu i testy widzą przycisk zamiast linku.
-  - Importujesz po ścieżce komponentu: `import { Button } from "@devmentor/ui/components/button"`. `@devmentor/ui` nie ma zbiorczego punktu wejścia; publiczne ścieżki to `components/*`, `lib/*`, `hooks/*` i `globals.css` (pole `exports`).
+  - Importujesz po ścieżce: `import { Button } from "@devmentor/ui/components/ui/button"`, `import { apiCall } from "@devmentor/ui/backend/api/api-call"`. `@devmentor/ui` nie ma zbiorczego punktu wejścia; publiczne ścieżki to `components/*`, `backend/*`, `lib/*`, `hooks/*` i `globals.css` (pole `exports`).
 - Jeden zestaw tokenów (kolory, typografia, odstępy, promienie) w `packages/ui/src/styles/globals.css` obsługuje obie części serwisu. Tryb ciemny wynika z `prefers-color-scheme` (domyślny wariant `dark:` Tailwinda). Nie dodawaj klasy `.dark` ani `@custom-variant dark` bez specyfikacji.
-- W App Routerze rozdzielaj części serwisu grupami tras, np. `app/(frontend)/...` i `app/(backend)/admin/...`, każda z własnym layoutem.
 
 ## Katalog `.ai/`: wspólna pamięć projektu
 
@@ -260,10 +344,12 @@ Przed commitem uruchom:
 ```bash
 npm run lint
 npm run typecheck
+npm run test       # Vitest (packages/core)
 npm run build
-npm run test:e2e   # przy zmianach stron, stylów, tras albo konfiguracji uruchomieniowej
+npm run audit      # npm audit bez zależności deweloperskich, próg high
+npm run test:e2e   # przy zmianach stron, stylów, tras, API albo konfiguracji uruchomieniowej
 ```
 
-Wszystkie komendy uruchamiasz w katalogu głównym repozytorium. `typecheck` sprawdza każdy pakiet workspace osobno, a `lint` pilnuje też granic między pakietami. `test:e2e` (Playwright, Chromium headless) buduje aplikację, uruchamia `next start` na porcie 3100 i testuje ją w przeglądarce. Testy są w `packages/app/e2e/`. Gdy `DATABASE_URL` jest ustawione (np. w głównym `.env` dla bazy z `docker compose up -d`), testy oczekują działającej bazy, a bez niej statusu „nieskonfigurowana”. Przeglądarkę instalujesz raz: `npx playwright install chromium`.
+Wszystkie komendy uruchamiasz w katalogu głównym repozytorium i sprawdzasz ich kod wyjścia (nie maskuj go potokiem do `tail`). `typecheck` sprawdza każdy pakiet workspace osobno, a `lint` pilnuje też granic między pakietami. `test:e2e` (Playwright, Chromium headless) buduje aplikację, uruchamia `next start` na porcie 3100 i testuje ją w przeglądarce. Testy są w `packages/app/e2e/`. Gdy `DATABASE_URL` jest ustawione (np. w głównym `.env` dla bazy z `docker compose up -d`), testy oczekują działającej i zmigrowanej bazy (`npm run db:migrate`) i uruchamiają też scenariusze logowania; bez niej oczekują statusu „nieskonfigurowana” i pomijają scenariusze z bazą. `AUTH_SECRET` dla testów ustawia `playwright.config.ts`, jeśli brak go w środowisku. Przeglądarkę instalujesz raz: `npx playwright install chromium`.
 
 Wynik zapisz w logu przebiegu (sekcja „Weryfikacja”).

@@ -1,4 +1,4 @@
-# AGENTS.md ma pierwszeństwo przed `engineering-standards.md`
+# Standardy inżynieryjne: decyzja człowieka rozstrzyga sprzeczność z AGENTS.md
 
 - **Data:** 2026-10-25
 - **Źródło:** rozmowa z człowiekiem po fazie 3 (`.ai/runs/2026-10-25-monorepo-phase-3.md`)
@@ -20,6 +20,10 @@ Dokument pochodzi spoza bieżącego stanu repozytorium. Nie przeszedł przez cyk
 
 Człowiek zdecydował: obowiązuje AGENTS.md. Pliku nie zmieniano, nie przenoszono i nie commitowano.
 
+## Aktualizacja 2026-10-25
+
+Człowiek zmienił decyzję: standardy wdrożono w całości, a przy sprzeczności wygrywają one. AGENTS.md został do nich dostosowany (`app → core → db`, kontener w `core`, `ui` samodzielny, `cacheComponents` wyłączone na rzecz `force-dynamic`). Plik źródłowy ma teraz nazwę `.ai/specs/2026-09-01-engineering-standards.md`, a jego przełożenie na repozytorium opisuje `.ai/specs/2026-10-25-engineering-standards-adoption.md`. Poprzednia reguła („stosuj AGENTS.md”) jest nieaktualna.
+
 ## Reguła na przyszłość
 
-Przy sprzeczności między AGENTS.md a `.ai/specs/engineering-standards.md` stosuj AGENTS.md: `db → core`, kontener Awilix w `packages/app`. Pliku nie edytuj, nie przenoś i nie commituj bez polecenia człowieka. Jeśli ma nadal obowiązywać jakaś jego część, wymaga ona osobnej specyfikacji, która zmienia AGENTS.md.
+AGENTS.md opisuje obowiązującą architekturę i ma pierwszeństwo. Dokument zewnętrzny albo spoza cyklu SDD (bez daty w nazwie, ze statusem spoza szablonu) nie zmienia architektury sam z siebie. Gdy jest sprzeczny z AGENTS.md, zatrzymaj się i zapytaj człowieka, która strona wygrywa, a decyzję przełóż na datowaną specyfikację, która aktualizuje AGENTS.md.

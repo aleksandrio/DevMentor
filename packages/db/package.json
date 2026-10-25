@@ -12,10 +12,10 @@
     "db:migration:create": "mikro-orm migration:create",
     "db:migration:list": "mikro-orm migration:list",
     "db:migration:pending": "mikro-orm migration:pending",
-    "db:debug": "mikro-orm debug"
+    "db:debug": "mikro-orm debug",
+    "db:user:promote": "node --import tsx src/scripts/promote-user.ts"
   },
   "dependencies": {
-    "@devmentor/core": "*",
     "@mikro-orm/core": "^7.2.5",
     "@mikro-orm/migrations": "^7.2.5",
     "@mikro-orm/postgresql": "^7.2.5",

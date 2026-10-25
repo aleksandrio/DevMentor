@@ -22,6 +22,7 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 ## Baza danych
 
 - [MikroORM 7: brak encji blokuje start, CLI nie czyta `.env` i potrzebuje loadera TS](lessons/2026-10-25-mikro-orm-7-setup-pitfalls.md): przy pustej liście encji wymagane jest `discovery.warnWhenNoEntities: false`; CLI ładuje `.ts` przez `tsx` (`"mikro-orm".tsLoader` w `packages/db/package.json`), a `.env` wczytuje sama konfiguracja przez `process.loadEnvFile()`; `init` łączy się leniwie, więc błędy połączenia obsługuj przy zapytaniu.
+- [Encje MikroORM w Next.js: przypnij nazwę klasy](lessons/2026-10-25-mikro-orm-entity-name-minification.md): każda klasa encji wywołuje `pinEntityName(Klasa, "<name>")` przed `setClass`, bo strony i trasy API mają osobne kopie `@devmentor/db`, a minifikator zmienia nazwy klas (`MetadataError … entity u` tylko w `next start`).
 - [Weryfikacja na PostgreSQL bez Dockera](lessons/2026-10-25-postgres-without-docker.md): gdy gniazdo Dockera jest niedostępne, uruchom `embedded-postgres` w `/tmp` (poza zależnościami projektu) i zanotuj to w logu przebiegu.
 
 ## Testy
@@ -34,8 +35,10 @@ Zasady prowadzenia indeksu opisuje `AGENTS.md`, sekcja „`.ai/lessons.md` i `.a
 
 ## Środowisko agenta
 
+- [CLI `tsx` nie działa przy długim `TMPDIR`](lessons/2026-10-25-tsx-cli-ipc-socket-path.md): skrypty TypeScript uruchamiaj przez `node --import tsx <plik>`, bo CLI `tsx` otwiera gniazdo IPC w `TMPDIR` i przy długiej ścieżce kończy się `listen EINVAL`.
+- [Potok do `tail` ukrywa kod wyjścia](lessons/2026-10-25-exit-code-masked-by-pipe.md): przed commitem sprawdzaj `$?` samej komendy (`lint`, `typecheck`, `test`, `build`), nie wiąż `git commit` przez `&&` z komendą przepuszczoną przez `| tail`.
 - [Zabijanie procesów po wzorcu zabija też powłokę](lessons/2026-10-25-kill-by-pattern-kills-shell.md): procesy zatrzymuj po nazwie (`ps -eo pid,comm`, np. `next-server`) albo po PID, nie przez `pkill -f`/`grep` po linii poleceń w tym samym wywołaniu.
 
 ## Proces
 
-- [AGENTS.md ma pierwszeństwo przed `engineering-standards.md`](lessons/2026-10-25-agents-md-over-foreign-specs.md): przy sprzeczności stosuj AGENTS.md (`db → core`, kontener Awilix w `packages/app`); pliku `.ai/specs/engineering-standards.md` nie edytuj, nie przenoś i nie commituj bez polecenia człowieka.
+- [Dokument spoza cyklu SDD nie zmienia architektury sam](lessons/2026-10-25-agents-md-over-foreign-specs.md): przy sprzeczności dokumentu zewnętrznego z AGENTS.md zapytaj człowieka, która strona wygrywa, i przełóż decyzję na datowaną specyfikację aktualizującą AGENTS.md (tak wdrożono `2026-09-01-engineering-standards.md`).
