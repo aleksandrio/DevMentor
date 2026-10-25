@@ -67,6 +67,17 @@ const eslintConfig = defineConfig([
     }),
   },
   {
+    // `npm run setup` runs before `npm install`: built-in modules only.
+    files: ["scripts/**/*.mjs"],
+    ignores: ["**/*.test.mjs"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { patterns: [{ regex: "^(?!node:|\\.{1,2}/)", message: "scripts/ runs before npm install: import only node:* built-ins and relative files." }] },
+      ],
+    },
+  },
+  {
     // apiCall is the only sanctioned fetch() call site for /api/* in UI code.
     files: ["packages/app/src/**", "packages/ui/src/**"],
     ignores: ["packages/ui/src/backend/api/**"],

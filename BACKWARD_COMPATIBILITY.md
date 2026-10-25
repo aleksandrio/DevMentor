@@ -49,7 +49,7 @@ Current: `auth.user.registered` → `{ userId, role }`.
 
 ### CLI scripts (root `package.json`)
 
-- `npm run db:migrate`, `db:migration:create -- --name`, `db:migration:list`, `db:migration:pending`, `db:user:promote -- --email`, `app:ephemeral`, and the validation scripts (`lint`, `typecheck`, `test`, `build`, `audit`, `test:integration`, `test:e2e`).
+- `npm run setup`, `npm run db:migrate`, `db:migration:create -- --name`, `db:migration:list`, `db:migration:pending`, `db:user:promote -- --email`, `app:ephemeral`, and the validation scripts (`lint`, `typecheck`, `test`, `build`, `audit`, `test:integration`, `test:e2e`).
 - **Breaking:** renaming or removing a script or flag that `AGENTS.md`, CI, `.ai/agentic.config.json` or `SDLC.md` refers to.
 - **Path:** update every reference in the same PR. For a validation command, update the config and `SDLC.md` together.
 
