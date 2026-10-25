@@ -1,6 +1,6 @@
 # Instalator lokalnego środowiska `npm run setup`
 
-- **Status:** draft
+- **Status:** approved
 - **Data:** 2026-10-25
 - **Autor:** Claude Code (claude-opus-5-5), przebieg `om-auto-fix-issue 6` (`om-auto-write-spec --autonomous`)
 - **Powiązane:** issue #6, `README.md` („Uruchomienie lokalne”, „Dostępne skrypty”), `BACKWARD_COMPATIBILITY.md` („CLI scripts (root `package.json`)”), `.ai/specs/2026-10-25-github-ci-and-test-coverage.md` (próg pokrycia 100%)
@@ -111,7 +111,7 @@ Brak — rozstrzygnięte domyślnie, zob. niżej.
 | # | Pytanie (z issue #6) | Przyjęta odpowiedź | Uzasadnienie |
 | --- | --- | --- | --- |
 | Q1 | Czy `setup` instaluje przeglądarki testowe (Playwright, agent-browser)? | Nie. | Najmniejszy zakres; pobieranie przeglądarek jest wolne i potrzebne tylko do testów. README dalej opisuje te komendy. |
-| Q2 | Brak Dockera: przerwać z błędem czy pominąć bazę z ostrzeżeniem i kodem 0? | Przerwać z kodem 1 przed jakimkolwiek zapisem. ⚠ NEEDS HUMAN CONFIRMATION | Kryteria „Done when” w issue wymagają niezerowego kodu i stanu „PostgreSQL działa” po sukcesie; kod 0 bez bazy dawałby fałszywy sukces. Issue sam oznacza to pytanie jako wymagające potwierdzenia człowieka. |
+| Q2 | Brak Dockera: przerwać z błędem czy pominąć bazę z ostrzeżeniem i kodem 0? | Przerwać z kodem 1 przed jakimkolwiek zapisem. Potwierdzone przez człowieka (2026-10-25). | Kryteria „Done when” w issue wymagają niezerowego kodu i stanu „PostgreSQL działa” po sukcesie; kod 0 bez bazy dawałby fałszywy sukces. Issue oznaczał to pytanie jako wymagające potwierdzenia; człowiek potwierdził. |
 | Q3 | Czy generować `AUTH_SECRET` automatycznie? | Tak, tylko gdy jest pusty albo go brak; 32 losowe bajty w base64; wartość nie trafia na wyjście. | Lokalny sekret deweloperski; nie osłabia bezpieczeństwa (silniejszy niż ręcznie wpisany) i nie dotyka istniejącej wartości. |
 | Q4 | `npm install`: pomijać czy uruchamiać zawsze? | Pomijać, gdy `node_modules/.package-lock.json` jest nowszy od `package-lock.json`. | Kryterium 2 wymaga „pominięto” przy każdym kroku; zmiana lockfile'a i tak wymusza instalację. |
 | Q5 | Gdzie mieszka skrypt i jak jest pokryty testami? | `scripts/` w katalogu głównym, nowy projekt Vitest `scripts` i `coverage.include` rozszerzone o `scripts/**/*.mjs`. | Skrypt musi działać przed `npm install`, więc nie może być w pakiecie workspace z zależnościami; rozszerzenie pomiaru zamiast wyłączenia zachowuje regułę 100%. |
@@ -121,3 +121,4 @@ Brak — rozstrzygnięte domyślnie, zob. niżej.
 <!-- YYYY-MM-DD: co się zmieniło i dlaczego -->
 
 - 2026-10-25: po przeglądzie (świeży kontekst) dodano `name: devmentor` w `docker-compose.yml` (konflikt portu 5432 w worktree), parser obu formatów `docker compose ps`, bezpieczny tryb pliku przy zapisie `.env`, regułę ESLint dla importów w `scripts/`, `// @ts-check` zamiast `checkJs` per plik i doprecyzowano kryterium 2.
+- 2026-10-25: człowiek zatwierdził specyfikację i potwierdził Q2 (brak Dockera → kod 1); status `approved`.
