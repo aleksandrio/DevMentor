@@ -7,6 +7,9 @@ import {
 } from "awilix";
 import { getOrm } from "@devmentor/db";
 import { readAppConfig } from "../config/env";
+import { EventBus } from "../events/event-bus";
+import { registerEventSubscribers } from "../events/subscribers";
+import { AUTH_RATE_LIMIT, FailureRateLimiter } from "../http/rate-limit";
 import { createLogger } from "../logger";
 import { MikroOrmDatabaseHealthProbe } from "../services/health/adapters/mikro-orm-database-health-probe";
 import { SystemHealthService } from "../services/health/system-health.service";
@@ -21,14 +24,20 @@ async function buildContainer(): Promise<AwilixContainer<Cradle>> {
     ? await getOrm({ databaseUrl: config.databaseUrl })
     : null;
 
+  const logger = createLogger(config);
+  const eventBus = new EventBus({ logger });
+  registerEventSubscribers(eventBus, logger);
+
   const container = createContainer<Cradle>({
     injectionMode: InjectionMode.PROXY,
     strict: true,
   });
   container.register({
     config: asValue(config),
-    logger: asValue(createLogger(config)),
+    logger: asValue(logger),
     orm: asValue(orm),
+    eventBus: asValue(eventBus),
+    authRateLimiter: asValue(new FailureRateLimiter(AUTH_RATE_LIMIT)),
     databaseHealthProbe: orm
       ? asClass(MikroOrmDatabaseHealthProbe).scoped()
       : asValue(null),

@@ -5,6 +5,8 @@ export type { AppConfig } from "./config/env";
 export type { Logger } from "./logger";
 export type { Cradle } from "./container/cradle";
 export { withScope } from "./container/scope";
+export * from "./http";
+export * from "./events";
 export type { DatabaseHealthProbe } from "./services/health/database-health-probe.port";
 export {
   SystemHealthService,
